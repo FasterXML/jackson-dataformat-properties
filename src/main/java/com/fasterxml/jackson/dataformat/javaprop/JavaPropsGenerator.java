@@ -74,8 +74,7 @@ public class JavaPropsGenerator  extends GeneratorBase
 
     @Override
     public boolean canUseSchema(FormatSchema schema) {
-        // !!! TODO
-        return false;
+        return schema instanceof JavaPropsSchema;
     }
     
     //@Override public void setSchema(FormatSchema schema)

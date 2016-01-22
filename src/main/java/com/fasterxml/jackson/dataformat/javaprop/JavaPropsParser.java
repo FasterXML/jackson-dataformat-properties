@@ -14,7 +14,7 @@ public class JavaPropsParser extends ParserBase
     /* Configuration
     /**********************************************************
      */
-    
+
     /**
      * Codec used for data binding when (if) requested.
      */
@@ -37,6 +37,12 @@ public class JavaPropsParser extends ParserBase
     public Version version() {
         return PackageVersion.VERSION;
     }
+
+    /*
+    /**********************************************************
+    /* Publc API overrides
+    /**********************************************************
+     */
     
     @Override
     public ObjectCodec getCodec() {
@@ -48,6 +54,11 @@ public class JavaPropsParser extends ParserBase
         _objectCodec = c;
     }
 
+    @Override
+    public boolean canUseSchema(FormatSchema schema) {
+        return schema instanceof JavaPropsSchema;
+    }
+    
     /*
     /**********************************************************
     /* Main parsing API

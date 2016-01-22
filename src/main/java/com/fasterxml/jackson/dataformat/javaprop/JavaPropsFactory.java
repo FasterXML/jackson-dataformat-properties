@@ -105,6 +105,11 @@ public class JavaPropsFactory extends JsonFactory
     }
 */
 
+    @Override
+    public boolean canUseSchema(FormatSchema schema) {
+        return schema instanceof JavaPropsSchema;
+    }
+    
     /*
     /**********************************************************
     /* Overridden parser factory methods
