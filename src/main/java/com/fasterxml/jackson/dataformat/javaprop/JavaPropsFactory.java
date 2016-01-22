@@ -2,6 +2,7 @@ package com.fasterxml.jackson.dataformat.javaprop;
 
 import java.io.*;
 import java.net.URL;
+import java.util.*;
 
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.core.format.InputAccessor;
@@ -171,24 +172,28 @@ public class JavaPropsFactory extends JsonFactory
 
     /*
     /******************************************************
-    /* Overridden internal factory methods
+    /* Overridden internal factory methods, parser
     /******************************************************
      */
 
+    /* // fine as-is: 
     @Override
     protected IOContext _createContext(Object srcRef, boolean resourceManaged) {
         return super._createContext(srcRef, resourceManaged);
     }
+    */
 
     @Override
     protected JavaPropsParser _createParser(InputStream in, IOContext ctxt) throws IOException
     {
+        Properties props = _loadProperties(in, ctxt);
 //        return new JavaPropsParser(ctxt, _parserFeatures, _objectCodec, in, 0, 0, true);
         return null;
     }
 
     @Override
     protected JsonParser _createParser(Reader r, IOContext ctxt) throws IOException {
+        Properties props = _loadProperties(r, ctxt);
 //      return new JavaPropsParser(ctxt, _parserFeatures, _objectCodec, null, data, offset, len, false);
       return null;
     }
@@ -197,17 +202,21 @@ public class JavaPropsFactory extends JsonFactory
     protected JsonParser _createParser(char[] data, int offset, int len, IOContext ctxt,
             boolean recyclable) throws IOException
     {
-//      return new JavaPropsParser(ctxt, _parserFeatures, _objectCodec, null, data, offset, len, false);
-      return null;
+        return _createParser(new CharArrayReader(data, offset, len), ctxt);
     }
 
     @Override
     protected JavaPropsParser _createParser(byte[] data, int offset, int len, IOContext ctxt) throws IOException
     {
-//        return new JavaPropsParser(ctxt, _parserFeatures, _objectCodec, null, data, offset, len, false);
-        return null;
+        return _createParser(new ByteArrayInputStream(data, offset, len), ctxt);
     }
 
+    /*
+    /******************************************************
+    /* Overridden internal factory methods, generator
+    /******************************************************
+     */
+    
     @Override
     protected JavaPropsGenerator _createGenerator(Writer out, IOContext ctxt) throws IOException {
         return null;
@@ -223,10 +232,54 @@ public class JavaPropsFactory extends JsonFactory
         return null;
     }
 
+    /*
+    /******************************************************
+    /* Low-level methods for reading/writing Properties; currently
+    /* we simply delegate to `java.util.Properties`
+    /******************************************************
+     */
+
+    protected Properties _loadProperties(InputStream in, IOContext ctxt)
+        throws IOException
+    {
+        // NOTE: Properties default to ISO-8859-1 (aka Latin-1), NOT UTF-8; this
+        // as per JDK documentation
+        return _loadProperties(new InputStreamReader(in, "ISO-8859-1"), ctxt);
+    }
+
+    protected Properties _loadProperties(Reader r0, IOContext ctxt)
+        throws IOException
+    {
+        Properties props = new Properties();
+        // May or may not want to close the reader, so...
+        if (ctxt.isResourceManaged()) {
+            try (Reader r = r0) {
+                props.load(r);
+            }
+        } else {
+            props.load(r0);
+        }
+        return props;
+    }
+
     private final JavaPropsGenerator _createJavaPropsGenerator(IOContext ctxt,
             int stdFeat, ObjectCodec codec, OutputStream out) throws IOException
     {
 //        return new JavaPropsGenerator(ctxt, stdFeat, _objectCodec, out);
         return null;
     }
+    
+    /*
+    public static void main(String[] args) throws Exception
+    {
+        args = new String[] { "test.properties" };
+        Properties props = new Properties();
+//        props.load(new FileInputStream(args[0]));
+        props.load(new ByteArrayInputStream(new byte[0]));
+        System.out.printf("%d entries:\n", props.size());
+        int i = 1;
+        for (Map.Entry<?,?> entry : props.entrySet()) {
+            System.out.printf("#%d: %s -> %s\n", i++, entry.getKey(), entry.getValue());
+        }
+    }*/
 }

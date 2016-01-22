@@ -35,24 +35,74 @@ public class JavaPropsSchema
 
     /*
     /**********************************************************************
+    /* Formatting constants for input and output
+    /**********************************************************************
+     */
+
+    /**
+     * Default path separator to use for hierarchic paths, if any; empty
+     * String may be used to indicate that no hierarchy should be inferred
+     * using a simple separator (although index markers may still be used,
+     * if defined).
+     */
+    protected String _pathSeparator = ".";
+
+    /**
+     * Default start marker for index access, if any; empty String may be used
+     * to indicate no marker-based index detection should be made.
+     *<p>
+     * Default value of "[" is usually combined with end marker of "]" to allow
+     * C/Java-style bracket notation, like "settings.path[1]".
+     */
+    protected String _indexStartMarker = "[";
+
+    /**
+     * Default end marker for index access, if any ; empty String may be used
+     * to indicate no marker-based index detection should be made.
+     */
+    protected String _indexEndMarker = "]";
+    
+    /*
+    /**********************************************************************
     /* Formatting constants for input(-only)
     /**********************************************************************
      */
 
     /**
-     * Whether index-notation is supported for path segments or not.
+     * Whether 'simple' index-notation is supported for path segments or not:
+     * simple meaning that if a path segment is a textual representation of
+     * a non-negative integer value with length of 9 or less (that is, up to
+     * but no including one billion), it will be considered index, not property
+     * name.
+     *<p>
+     * Note that this settings does NOT control whether "start/end marker" indicated
+     * indexes are enabled or not; those depend on {@link #_indexStartMarker} and
+     * {@link #_indexEndMarker}.
      *<p>
      * Default value is <code>true</code>, "plain" index segments are
      * supported.
      */
-    protected boolean _parseIndexes = false;
-    
+    protected boolean _parseSimpleIndexes = true;
+
     /*
     /**********************************************************************
     /* Formatting constants for output(-only)
     /**********************************************************************
      */
-    
+
+    /**
+     * Whether array-element paths are written using start/end markers
+     * (see {@link #_indexStartMarker}, {@link #_indexEndMarker}) or
+     * "simple" index number: if set to <code>true</code> AND markers
+     * are specified as non-empty Strings, will use sequence of
+     *<pre>
+     *   startMarker index endMarker
+     *</pre>
+     * to include index in path; otherwise will simply use textual representation
+     * of the index number as path segment, prefixed by path separator as necessary.
+     */
+    protected boolean _writeIndexUsingMarkers;
+
     /**
      * String prepended before key value, as possible indentation
      */
@@ -71,6 +121,14 @@ public class JavaPropsSchema
      * Default value is the 'Unix linefeed'.
      */
     protected String _lineEnding = "\n";
+
+    /**
+     * Optional header to prepend before any other output: typically a
+     * comment section or so. Note that contents here are
+     * <b>NOT modified in any way</b>, meaning that any comment indicators
+     * (leading '#' or '!') and linefeeds MUST be specified by caller.
+     */
+    protected String _header = "";
     
     /*
     /**********************************************************************
@@ -88,4 +146,44 @@ public class JavaPropsSchema
     /* Public API, extended, properties
     /**********************************************************************
      */
+
+    public int firstArrayOffset() {
+        return _firstArrayOffset;
+    }
+
+    public String header() {
+        return _header;
+    }
+    
+    public String indexStartMarker() {
+        return _indexStartMarker;
+    }
+
+    public String indexEndMarker() {
+        return _indexEndMarker;
+    }
+
+    public String lineEnding() {
+        return _lineEnding;
+    }
+
+    public String lineIndentation() {
+        return _lineIndentation;
+    }
+
+    public String lineKeyValueSeparator() {
+        return _lineKeyValueSeparator;
+    }
+
+    public boolean parseSimpleIndexes() {
+        return _parseSimpleIndexes;
+    }
+    
+    public String pathSeparator() {
+        return _pathSeparator;
+    }
+
+    public boolean writeIndexUsingMarkers() {
+        return _writeIndexUsingMarkers;
+    }
 }
