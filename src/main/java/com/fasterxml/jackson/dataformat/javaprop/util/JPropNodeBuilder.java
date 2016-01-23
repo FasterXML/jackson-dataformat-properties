@@ -11,7 +11,7 @@ public class JPropNodeBuilder
 
     protected final JPropPathSplitter _splitter;
 
-    protected JPropNode _root;
+    protected final JPropNode _root;
     
     protected JPropNodeBuilder(JavaPropsSchema schema)
     {

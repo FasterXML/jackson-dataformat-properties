@@ -4,7 +4,11 @@ import java.util.*;
 
 /**
  * Value in an ordered tree presentation built from an arbitrarily ordered
- * set of flat input values
+ * set of flat input values. Since either index- OR name-based access is to
+ * be supported (similar to, say, Javascript objects) -- but only one, not both --
+ * storage is bit of a hybrid. In addition, branches may also have values.
+ * So, code does bit coercion as necessary, trying to maintain something
+ * consistent and usable at all times, without failure.
  */
 public class JPropNode
 {
@@ -24,4 +28,47 @@ public class JPropNode
      * Child entries accessed with String property name, if any.
      */
     protected Map<String, JPropNode> _byName;
+
+    public void setValue(String v) {
+        // should we care about overwrite?
+        _value = v;
+    }
+
+    public JPropNode addByIndex(int index) {
+        // if we already have named entries, coerce into name
+        if (_byName != null) {
+            return addByName(String.valueOf(index));
+        }
+        if (_byIndex == null) {
+            _byIndex = new LinkedHashMap<>();
+        }
+        Integer key = Integer.valueOf(index);
+        JPropNode n = _byIndex.get(key);
+        if (n == null) {
+            n = new JPropNode();
+            _byIndex.put(key, n);
+        }
+        return n;
+    }
+    
+    public JPropNode addByName(String name) {
+        // if former index entries, first coerce them
+        if (_byIndex != null) {
+            for (Map.Entry<Integer, JPropNode> entry : _byIndex.entrySet()) {
+                _byName.put(entry.getKey().toString(), entry.getValue());
+            }
+            _byIndex = null;
+        }
+        if (_byName == null) {
+            _byName = new LinkedHashMap<>();
+        } else {
+            JPropNode old = _byName.get(name);
+            if (old != null) {
+                return old;
+            }
+        }
+        JPropNode result = new JPropNode();
+        _byName.put(name, result);
+        return result;
+    }
 }
