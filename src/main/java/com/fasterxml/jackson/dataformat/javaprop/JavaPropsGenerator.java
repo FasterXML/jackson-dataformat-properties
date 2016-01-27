@@ -10,11 +10,21 @@ import com.fasterxml.jackson.core.base.GeneratorBase;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.json.JsonWriteContext;
 
-public class JavaPropsGenerator  extends GeneratorBase
-{
-    protected final static long MIN_INT_AS_LONG = (long) Integer.MIN_VALUE;
-    protected final static long MAX_INT_AS_LONG = (long) Integer.MAX_VALUE;
+import com.fasterxml.jackson.dataformat.javaprop.util.JPropWriteContext;
 
+public class JavaPropsGenerator extends GeneratorBase
+{
+    /**
+     * Since our context object does NOT implement standard write context, need
+     * to do something like use a placeholder...
+     */
+    protected final static JsonWriteContext BOGUS_WRITE_CONTEXT = JsonWriteContext.createRootContext(null);
+    
+    private final static JavaPropsSchema EMPTY_SCHEMA;
+    static {
+        EMPTY_SCHEMA = JavaPropsSchema.emptySchema();
+    }
+    
     /*
     /**********************************************************
     /* Configuration
@@ -23,23 +33,83 @@ public class JavaPropsGenerator  extends GeneratorBase
 
     final protected IOContext _ioContext;
 
+    /**
+     * Underlying {@link Writer} used for output.
+     */
+    final protected Writer _out;
+
+    /**
+     * Definition of columns being written, if available.
+     */
+    protected JavaPropsSchema _schema = EMPTY_SCHEMA;
+
+    /*
+    /**********************************************************
+    /* Output state
+    /**********************************************************
+     */
+    
+    /**
+     * Current context, in form we can use it (GeneratorBase has
+     * untyped reference; left as null)
+     */
+    protected JPropWriteContext _jpropContext;
+    
+    /*
+    /**********************************************************
+    /* Output buffering
+    /**********************************************************
+     */
+
+    /**
+     * Intermediate buffer in which contents are buffered before
+     * being written using {@link #_out}.
+     */
+    protected char[] _outputBuffer;
+
+    /**
+     * Pointer to the next available location in {@link #_outputBuffer}
+     */
+    protected int _outputTail = 0;
+
+    /**
+     * Offset to index after the last valid index in {@link #_outputBuffer}.
+     * Typically same as length of the buffer.
+     */
+    protected final int _outputEnd;
+
     /*
     /**********************************************************
     /* Life-cycle
     /**********************************************************
      */
     
-    public JavaPropsGenerator(IOContext ctxt, int stdFeatures,
-            ObjectCodec codec)
+    public JavaPropsGenerator(IOContext ctxt, Writer out,
+            int stdFeatures, ObjectCodec codec)
     {
-        super(stdFeatures, codec);
+        super(stdFeatures, codec, BOGUS_WRITE_CONTEXT);
         _ioContext = ctxt;
+        _out = out;
+        _outputBuffer = ctxt.allocConcatBuffer();
+        _outputEnd = _outputBuffer.length;
+        _jpropContext = JPropWriteContext.createRootContext();
+    }
+
+    @Override
+    public Object getCurrentValue() {
+        return _jpropContext.getCurrentValue();
+    }
+
+    @Override
+    public void setCurrentValue(Object v) {
+        _jpropContext.setCurrentValue(v);
     }
 
     @Override
     public Version version() {
         return PackageVersion.VERSION;
     }
+
     /*
     /**********************************************************
     /* Overridden methods, configuration
@@ -98,11 +168,35 @@ public class JavaPropsGenerator  extends GeneratorBase
      */
 
     @Override
-    public void flush() throws IOException {
-        // TODO Auto-generated method stub
-        
+    public void close() throws IOException
+    {
+        super.close();
+        _flushBuffer();
+        _outputTail = 0; // just to ensure we don't think there's anything buffered
+
+        if (_out != null) {
+            if (_ioContext.isResourceManaged() || isEnabled(Feature.AUTO_CLOSE_TARGET)) {
+                _out.close();
+            } else if (isEnabled(Feature.FLUSH_PASSED_TO_STREAM)) {
+                // If we can't close it, we should at least flush
+                _out.flush();
+            }
+        }
+        // Internal buffer(s) generator has can now be released as well
+        _releaseBuffers();
     }
-    
+
+    @Override
+    public void flush() throws IOException
+    {
+        _flushBuffer();
+        if (_out != null) {
+            if (isEnabled(Feature.FLUSH_PASSED_TO_STREAM)) {
+                _out.flush();
+            }
+        }
+    }
+
     /*
     /**********************************************************************
     /* Overridden methods; writing field names
@@ -112,7 +206,7 @@ public class JavaPropsGenerator  extends GeneratorBase
     @Override
     public void writeFieldName(String name) throws IOException
     {
-        if (_writeContext.writeFieldName(name) == JsonWriteContext.STATUS_EXPECT_VALUE) {
+        if (_jpropContext.writeFieldName(name) == JPropWriteContext.STATUS_EXPECT_VALUE) {
             _reportError("Can not write a field name, expecting a value");
         }
         // TODO: actual addition of name
@@ -125,27 +219,39 @@ public class JavaPropsGenerator  extends GeneratorBase
      */
 
     @Override
-    public void writeStartObject() throws IOException {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
-    public void writeEndObject() throws IOException {
-        // TODO Auto-generated method stub
-        
-    }
-    
-    @Override
     public void writeStartArray() throws IOException {
-        // TODO Auto-generated method stub
-        
+        _verifyValueWrite("start an array");
+        _writeContext = _writeContext.createChildArrayContext();
+
+        // !!! TODO
     }
 
     @Override
     public void writeEndArray() throws IOException {
-        // TODO Auto-generated method stub
-        
+        if (!_writeContext.inArray()) {
+            _reportError("Current context not an ARRAY but "+_writeContext.getTypeDesc());
+        }
+        _writeContext = _writeContext.getParent();
+
+        // !!! TODO
+    }
+
+    @Override
+    public void writeStartObject() throws IOException {
+        _verifyValueWrite("start an object");
+
+        // !!! TODO
+    }
+
+    @Override
+    public void writeEndObject() throws IOException
+    {
+        if (!_writeContext.inObject()) {
+            _reportError("Current context not an object but "+_writeContext.getTypeDesc());
+        }
+        _writeContext = _writeContext.getParent();
+
+        // !!! TODO
     }
 
     /*
@@ -155,31 +261,34 @@ public class JavaPropsGenerator  extends GeneratorBase
      */
 
     @Override
-    public void writeString(String text) throws IOException {
-        // TODO Auto-generated method stub
-        
+    public void writeString(String text) throws IOException
+    {
+        if (text == null) {
+            writeNull();
+            return;
+        }
+        _verifyValueWrite("write String value");
+        _writeEscaped(text);
     }
 
     @Override
     public void writeString(char[] text, int offset, int len)
         throws IOException
     {
-        // TODO Auto-generated method stub
-        
+        _verifyValueWrite("write String value");
+        _writeEscaped(text, offset, len);
     }
 
     @Override
-    public void writeRawUTF8String(byte[] text, int offset, int length)
-        throws IOException
+    public void writeRawUTF8String(byte[] text, int offset, int len)throws IOException
     {
         _reportUnsupportedOperation();
     }
 
     @Override
-    public void writeUTF8String(byte[] text, int offset, int length)
-        throws IOException
+    public void writeUTF8String(byte[] text, int offset, int len) throws IOException
     {
-        _reportUnsupportedOperation();
+        writeString(new String(text, offset, len, "UTF-8"));
     }
 
     /*
@@ -190,27 +299,27 @@ public class JavaPropsGenerator  extends GeneratorBase
 
     @Override
     public void writeRaw(String text) throws IOException {
-        // TODO Auto-generated method stub
-        
+        _writeRaw(text);
     }
 
     @Override
     public void writeRaw(String text, int offset, int len) throws IOException {
-        // TODO Auto-generated method stub
-        
+        _writeRaw(text.substring(offset, offset+len));
     }
 
     @Override
     public void writeRaw(char[] text, int offset, int len) throws IOException {
-        // TODO Auto-generated method stub
-        
+        _writeRaw(text, offset, len);
     }
 
     @Override
-    public void writeRaw(char c) throws IOException
-    {
-        // TODO Auto-generated method stub
-        
+    public void writeRaw(char c) throws IOException {
+        _writeRaw(c);
+    }
+
+    @Override
+    public void writeRaw(SerializableString text) throws IOException, JsonGenerationException {
+        writeRaw(text.toString());
     }
 
     /*
@@ -233,8 +342,7 @@ public class JavaPropsGenerator  extends GeneratorBase
             data = Arrays.copyOfRange(data, offset, offset+len);
         }
         String encoded = b64variant.encode(data);
-
-        // !!! TODO: write
+        _writeUnescapedValue(encoded);
     }
 
     /*
@@ -247,26 +355,21 @@ public class JavaPropsGenerator  extends GeneratorBase
     public void writeBoolean(boolean state) throws IOException
     {
         _verifyValueWrite("write boolean value");
-        // !!! TODO: actual write
+        _writeUnescapedValue(state ? "true" : "false");
     }
 
     @Override
     public void writeNumber(int i) throws IOException
     {
         _verifyValueWrite("write number");
-        // !!! TODO: actual write
+        _writeUnescapedValue(String.valueOf(i));
     }
 
     @Override
     public void writeNumber(long l) throws IOException
     {
-        // First: maybe 32 bits is enough?
-        if (l <= MAX_INT_AS_LONG && l >= MIN_INT_AS_LONG) {
-            writeNumber((int) l);
-            return;
-        }
         _verifyValueWrite("write number");
-        // !!! TODO: actual write
+        _writeUnescapedValue(String.valueOf(l));
     }
 
     @Override
@@ -277,21 +380,21 @@ public class JavaPropsGenerator  extends GeneratorBase
             return;
         }
         _verifyValueWrite("write number");
-        // !!! TODO: actual write
+        _writeUnescapedValue(String.valueOf(v));
     }
     
     @Override
     public void writeNumber(double d) throws IOException
     {
         _verifyValueWrite("write number");
-        // !!! TODO: actual write
+        _writeUnescapedValue(String.valueOf(d));
     }    
 
     @Override
     public void writeNumber(float f) throws IOException
     {
         _verifyValueWrite("write number");
-        // !!! TODO: actual write
+        _writeUnescapedValue(String.valueOf(f));
     }
 
     @Override
@@ -303,25 +406,25 @@ public class JavaPropsGenerator  extends GeneratorBase
         }
         _verifyValueWrite("write number");
         String str = isEnabled(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN) ? dec.toPlainString() : dec.toString();
-        // !!! TODO: actual write
+        _writeUnescapedValue(str);
     }
 
     @Override
-    public void writeNumber(String encodedValue) throws IOException,JsonGenerationException, UnsupportedOperationException
+    public void writeNumber(String encodedValue) throws IOException
     {
         if (encodedValue == null) {
             writeNull();
             return;
         }
         _verifyValueWrite("write number");
-        // !!! TODO: actual write
+        _writeUnescapedValue(encodedValue);
     }
 
     @Override
     public void writeNull() throws IOException
     {
         _verifyValueWrite("write null value");
-        // !!! TODO: actual write
+        _writeUnescapedValue("");
     }
 
     /*
@@ -331,15 +434,82 @@ public class JavaPropsGenerator  extends GeneratorBase
      */
 
     @Override
-    protected void _releaseBuffers() {
-        // no buffers to release
+    protected void _releaseBuffers()
+    {
+        char[] buf = _outputBuffer;
+        if (buf != null) {
+            _outputBuffer = null;
+            _ioContext.releaseConcatBuffer(buf);
+        }
+    }
+
+    protected void _flushBuffer() throws IOException
+    {
+        if (_outputTail > 0) {
+            _out.write(_outputBuffer, 0, _outputTail);
+            _outputTail = 0;
+        }
     }
 
     @Override
     protected void _verifyValueWrite(String typeMsg) throws IOException {
-        int status = _writeContext.writeValue();
-        if (status == JsonWriteContext.STATUS_EXPECT_NAME) {
+        int status = _jpropContext.writeValue();
+        if (status == JPropWriteContext.STATUS_EXPECT_NAME) {
             _reportError("Can not "+typeMsg+", expecting field name");
         }
+    }
+
+    /*
+    /**********************************************************
+    /* Internal methods
+    /**********************************************************
+     */
+    
+    protected void _writeEscapedValue(String value) throws IOException
+    {
+        _writeEscaped(value);
+        _writeLinefeed();
+    }
+
+    protected void _writeEscapedValue(char[] text, int offset, int len) throws IOException
+    {
+        _writeEscaped(text, offset, len);
+        _writeLinefeed();
+    }
+
+    protected void _writeUnescapedValue(String value) throws IOException
+    {
+        _writeRaw(value);
+        _writeLinefeed();
+    }
+
+    protected void _writeEscaped(String value) throws IOException
+    {
+        // !!! TODO
+    }
+    
+    protected void _writeEscaped(char[] text, int offset, int len) throws IOException
+    {
+        // !!! TODO
+    }
+
+    protected void _writeRaw(String value) throws IOException
+    {
+        // !!! TODO
+    }
+
+    protected void _writeRaw(char[] text, int offset, int len) throws IOException
+    {
+        // !!! TODO
+    }
+
+    protected void _writeRaw(char ch) throws IOException
+    {
+        // !!! TODO
+    }
+
+    protected void _writeLinefeed() throws IOException
+    {
+        // !!! TODO
     }
 }

@@ -16,6 +16,8 @@ public class JavaPropsSchema
 {
     private static final long serialVersionUID = 1L; // 2.5
 
+    protected final static JavaPropsSchema EMPTY = new JavaPropsSchema();
+    
     /*
     /**********************************************************************
     /* Simple numeric properties
@@ -141,6 +143,10 @@ public class JavaPropsSchema
         return "JavaProps";
     }
 
+    public static JavaPropsSchema emptySchema() {
+        return EMPTY;
+    }
+    
     /*
     /**********************************************************************
     /* Public API, extended, properties
