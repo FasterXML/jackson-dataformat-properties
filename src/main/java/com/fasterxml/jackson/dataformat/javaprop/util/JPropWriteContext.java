@@ -60,11 +60,13 @@ public class JPropWriteContext
         _type = type;
         _parent = parent;
         _basePathLength = basePathLength;
+        _index = -1;
     }
 
     private void reset(int type, int basePathLength) {
         _type = type;
         _basePathLength = basePathLength;
+        _index = -1;
     }
     
     // // // Factory methods
