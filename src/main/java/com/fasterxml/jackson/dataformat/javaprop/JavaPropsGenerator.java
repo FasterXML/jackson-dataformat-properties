@@ -9,11 +9,15 @@ import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.core.base.GeneratorBase;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.json.JsonWriteContext;
-
+import com.fasterxml.jackson.dataformat.javaprop.util.JPropEscapes;
 import com.fasterxml.jackson.dataformat.javaprop.util.JPropWriteContext;
 
 public class JavaPropsGenerator extends GeneratorBase
 {
+    // As an optimization we try coalescing short writes into
+    // buffer; but pass longer directly.
+    final protected static int SHORT_WRITE = 100;
+
     /**
      * Since our context object does NOT implement standard write context, need
      * to do something like use a placeholder...
@@ -24,6 +28,9 @@ public class JavaPropsGenerator extends GeneratorBase
     static {
         EMPTY_SCHEMA = JavaPropsSchema.emptySchema();
     }
+
+    protected final int[] sKeyEscapes = JPropEscapes.getKeyEscapes();
+    protected final int[] sValueEscapes = JPropEscapes.getValueEscapes();
     
     /*
     /**********************************************************
@@ -48,13 +55,13 @@ public class JavaPropsGenerator extends GeneratorBase
     /* Output state
     /**********************************************************
      */
-    
+
     /**
      * Current context, in form we can use it (GeneratorBase has
      * untyped reference; left as null)
      */
     protected JPropWriteContext _jpropContext;
-    
+
     /*
     /**********************************************************
     /* Output buffering
@@ -79,13 +86,13 @@ public class JavaPropsGenerator extends GeneratorBase
     protected final int _outputEnd;
 
     protected final StringBuilder _basePath = new StringBuilder(50);
-    
+
     /*
     /**********************************************************
     /* Life-cycle
     /**********************************************************
      */
-    
+
     public JavaPropsGenerator(IOContext ctxt, Writer out,
             int stdFeatures, ObjectCodec codec)
     {
@@ -217,10 +224,11 @@ public class JavaPropsGenerator extends GeneratorBase
         if (_basePath.length() > 0) {
             String sep = _schema.pathSeparator();
             if (!sep.isEmpty()) {
-                _writeRaw(sep);
+                _basePath.append(sep);
             }
         }
-        _writeEscapedKey(name);
+        // NOTE: we do NOT yet write the key; wait until we have value; just append to path
+        _basePath.append(name);
     }
 
     /*
@@ -280,7 +288,7 @@ public class JavaPropsGenerator extends GeneratorBase
             return;
         }
         _verifyValueWrite("write String value");
-        _writeEscaped(text);
+        _writeEscapedEntry(text);
     }
 
     @Override
@@ -288,7 +296,7 @@ public class JavaPropsGenerator extends GeneratorBase
         throws IOException
     {
         _verifyValueWrite("write String value");
-        _writeEscaped(text, offset, len);
+        _writeEscapedEntry(text, offset, len);
     }
 
     @Override
@@ -354,7 +362,7 @@ public class JavaPropsGenerator extends GeneratorBase
             data = Arrays.copyOfRange(data, offset, offset+len);
         }
         String encoded = b64variant.encode(data);
-        _writeUnescapedValue(encoded);
+        _writeEscapedEntry(encoded);
     }
 
     /*
@@ -367,21 +375,21 @@ public class JavaPropsGenerator extends GeneratorBase
     public void writeBoolean(boolean state) throws IOException
     {
         _verifyValueWrite("write boolean value");
-        _writeUnescapedValue(state ? "true" : "false");
+        _writeUnescapedEntry(state ? "true" : "false");
     }
 
     @Override
     public void writeNumber(int i) throws IOException
     {
         _verifyValueWrite("write number");
-        _writeUnescapedValue(String.valueOf(i));
+        _writeUnescapedEntry(String.valueOf(i));
     }
 
     @Override
     public void writeNumber(long l) throws IOException
     {
         _verifyValueWrite("write number");
-        _writeUnescapedValue(String.valueOf(l));
+        _writeUnescapedEntry(String.valueOf(l));
     }
 
     @Override
@@ -392,21 +400,21 @@ public class JavaPropsGenerator extends GeneratorBase
             return;
         }
         _verifyValueWrite("write number");
-        _writeUnescapedValue(String.valueOf(v));
+        _writeUnescapedEntry(String.valueOf(v));
     }
     
     @Override
     public void writeNumber(double d) throws IOException
     {
         _verifyValueWrite("write number");
-        _writeUnescapedValue(String.valueOf(d));
+        _writeUnescapedEntry(String.valueOf(d));
     }    
 
     @Override
     public void writeNumber(float f) throws IOException
     {
         _verifyValueWrite("write number");
-        _writeUnescapedValue(String.valueOf(f));
+        _writeUnescapedEntry(String.valueOf(f));
     }
 
     @Override
@@ -418,7 +426,7 @@ public class JavaPropsGenerator extends GeneratorBase
         }
         _verifyValueWrite("write number");
         String str = isEnabled(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN) ? dec.toPlainString() : dec.toString();
-        _writeUnescapedValue(str);
+        _writeUnescapedEntry(str);
     }
 
     @Override
@@ -429,14 +437,14 @@ public class JavaPropsGenerator extends GeneratorBase
             return;
         }
         _verifyValueWrite("write number");
-        _writeUnescapedValue(encodedValue);
+        _writeUnescapedEntry(encodedValue);
     }
 
     @Override
     public void writeNull() throws IOException
     {
         _verifyValueWrite("write null value");
-        _writeUnescapedValue("");
+        _writeUnescapedEntry("");
     }
 
     /*
@@ -474,45 +482,48 @@ public class JavaPropsGenerator extends GeneratorBase
         if (_jpropContext.inArray()) {
             // remove possible path remnants from an earlier sibling
             _jpropContext.truncatePath(_basePath);
-            String ixStr = String.valueOf(_jpropContext.getCurrentIndex() + _schema.firstArrayOffset());
+            int ix = _jpropContext.getCurrentIndex() + _schema.firstArrayOffset();
             if (_schema.writeIndexUsingMarkers()) {
                 // no leading path separator, if using enclosed indexes
-                _writeRaw(_schema.indexStartMarker());
-                _writeRaw(ixStr);
-                _writeRaw(_schema.indexEndMarker());
+                _basePath.append(_schema.indexStartMarker());
+                _basePath.append(ix);
+                _basePath.append(_schema.indexEndMarker());
             } else {
                 // leading path separator, if using "simple" index markers
                 if (_basePath.length() > 0) {
                     String sep = _schema.pathSeparator();
                     if (!sep.isEmpty()) {
-                        _writeRaw(sep);
+                        _basePath.append(sep);
                     }
                 }
-                _writeRaw(ixStr);
+                _basePath.append(ix);
             }
         }
     }
 
     /*
     /**********************************************************
-    /* Internal methods
+    /* Internal methods; escaping writes
     /**********************************************************
      */
     
-    protected void _writeEscapedValue(String value) throws IOException
+    protected void _writeEscapedEntry(String value) throws IOException
     {
+        _writeKey();
         _writeEscaped(value);
         _writeLinefeed();
     }
 
-    protected void _writeEscapedValue(char[] text, int offset, int len) throws IOException
+    protected void _writeEscapedEntry(char[] text, int offset, int len) throws IOException
     {
+        _writeKey();
         _writeEscaped(text, offset, len);
         _writeLinefeed();
     }
 
-    protected void _writeUnescapedValue(String value) throws IOException
+    protected void _writeUnescapedEntry(String value) throws IOException
     {
+        _writeKey();
         _writeRaw(value);
         _writeLinefeed();
     }
@@ -520,35 +531,116 @@ public class JavaPropsGenerator extends GeneratorBase
     protected void _writeEscaped(String value) throws IOException
     {
         // !!! TODO
+        _writeRaw(value);
     }
 
-    protected void _writeEscapedKey(String value) throws IOException
-    {
-        // !!! TODO
-    }
-    
     protected void _writeEscaped(char[] text, int offset, int len) throws IOException
     {
         // !!! TODO
+        _writeRaw(text, offset, len);
     }
 
-    protected void _writeRaw(String value) throws IOException
+    protected void _writeKey() throws IOException
     {
+        String key = _basePath.toString();
         // !!! TODO
-    }
-
-    protected void _writeRaw(char[] text, int offset, int len) throws IOException
-    {
-        // !!! TODO
-    }
-
-    protected void _writeRaw(char ch) throws IOException
-    {
-        // !!! TODO
+        _writeRaw(key);
+        _writeRaw(_schema.lineKeyValueSeparator());
     }
 
     protected void _writeLinefeed() throws IOException
     {
+        _writeRaw('\n');
         // !!! TODO
+    }
+    
+    /*
+    /**********************************************************
+    /* Internal methods; raw writes
+    /**********************************************************
+     */
+    
+    public void _writeRaw(String text) throws IOException
+    {
+        // Nothing to check, can just output as is
+        int len = text.length();
+        int room = _outputEnd - _outputTail;
+
+        if (room == 0) {
+            _flushBuffer();
+            room = _outputEnd - _outputTail;
+        }
+        // But would it nicely fit in? If yes, it's easy
+        if (room >= len) {
+            text.getChars(0, len, _outputBuffer, _outputTail);
+            _outputTail += len;
+        } else {
+            _writeRawLong(text);
+        }
+    }
+
+    public void _writeRaw(String text, int start, int len) throws IOException
+    {
+        // Nothing to check, can just output as is
+        int room = _outputEnd - _outputTail;
+
+        if (room < len) {
+            _flushBuffer();
+            room = _outputEnd - _outputTail;
+        }
+        // But would it nicely fit in? If yes, it's easy
+        if (room >= len) {
+            text.getChars(start, start+len, _outputBuffer, _outputTail);
+            _outputTail += len;
+        } else {                
+            _writeRawLong(text.substring(start, start+len));
+        }
+    }
+
+    protected void _writeRaw(char[] text, int offset, int len) throws IOException
+    {
+        // Only worth buffering if it's a short write?
+        if (len < SHORT_WRITE) {
+            int room = _outputEnd - _outputTail;
+            if (len > room) {
+                _flushBuffer();
+            }
+            System.arraycopy(text, offset, _outputBuffer, _outputTail, len);
+            _outputTail += len;
+            return;
+        }
+        // Otherwise, better just pass through:
+        _flushBuffer();
+        _out.write(text, offset, len);
+    }
+
+    protected void _writeRaw(char c) throws IOException
+    {
+        if (_outputTail >= _outputEnd) {
+            _flushBuffer();
+        }
+        _outputBuffer[_outputTail++] = c;
+    }
+
+    protected void _writeRawLong(String text) throws IOException
+    {
+        int room = _outputEnd - _outputTail;
+        text.getChars(0, room, _outputBuffer, _outputTail);
+        _outputTail += room;
+        _flushBuffer();
+        int offset = room;
+        int len = text.length() - room;
+
+        while (len > _outputEnd) {
+            int amount = _outputEnd;
+            text.getChars(offset, offset+amount, _outputBuffer, 0);
+            _outputTail = amount;
+            _flushBuffer();
+            offset += amount;
+            len -= amount;
+        }
+        // And last piece (at most length of buffer)
+        text.getChars(offset, offset+len, _outputBuffer, 0);
+        _outputTail = len;
     }
 }

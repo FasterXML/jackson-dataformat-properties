@@ -115,11 +115,8 @@ public class JPropWriteContext
                 return false;
             }
             _gotName = false;
-        // Ok, array?
-        } else if (_type != TYPE_ARRAY) {
-            // root context won't work with properties
-            return false;
         }
+        // Array fine, and must allow root context for Object values too so...
         ++_index;
         return true;
     }

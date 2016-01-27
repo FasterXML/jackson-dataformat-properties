@@ -14,7 +14,9 @@ public class JavaPropsFactory extends JsonFactory
     private static final long serialVersionUID = 1L;
 
     public final static String FORMAT_NAME_JAVA_PROPERTIES = "java_properties";
-    
+
+    protected final static String CHARSET_ID_LATIN1 = "ISO-8859-1";
+
     /*
     /**********************************************************
     /* Factory construction, configuration
@@ -187,15 +189,15 @@ public class JavaPropsFactory extends JsonFactory
     protected JavaPropsParser _createParser(InputStream in, IOContext ctxt) throws IOException
     {
         Properties props = _loadProperties(in, ctxt);
-//        return new JavaPropsParser(ctxt, _parserFeatures, _objectCodec, in, 0, 0, true);
-        return null;
+        // !!! TODO
+        return new JavaPropsParser(ctxt, _parserFeatures, _objectCodec);
     }
 
     @Override
     protected JsonParser _createParser(Reader r, IOContext ctxt) throws IOException {
         Properties props = _loadProperties(r, ctxt);
-//      return new JavaPropsParser(ctxt, _parserFeatures, _objectCodec, null, data, offset, len, false);
-      return null;
+        // !!! TODO
+        return new JavaPropsParser(ctxt, _parserFeatures, _objectCodec);
     }
 
     @Override
@@ -218,8 +220,9 @@ public class JavaPropsFactory extends JsonFactory
      */
     
     @Override
-    protected JavaPropsGenerator _createGenerator(Writer out, IOContext ctxt) throws IOException {
-        return null;
+    protected JavaPropsGenerator _createGenerator(Writer out, IOContext ctxt) throws IOException
+    {
+        return new JavaPropsGenerator(ctxt, out, _generatorFeatures, _objectCodec);
     }
 
     @Override
@@ -229,7 +232,9 @@ public class JavaPropsFactory extends JsonFactory
 
     @Override
     protected Writer _createWriter(OutputStream out, JsonEncoding enc, IOContext ctxt) throws IOException {
-        return null;
+        // 27-Jan-2016, tatu: Properties javadoc is quite clear on Latin-1 (ISO-8859-1) being
+        //    the default, so let's actually override
+        return new OutputStreamWriter(out, CHARSET_ID_LATIN1);
     }
 
     /*
@@ -244,7 +249,7 @@ public class JavaPropsFactory extends JsonFactory
     {
         // NOTE: Properties default to ISO-8859-1 (aka Latin-1), NOT UTF-8; this
         // as per JDK documentation
-        return _loadProperties(new InputStreamReader(in, "ISO-8859-1"), ctxt);
+        return _loadProperties(new InputStreamReader(in, CHARSET_ID_LATIN1), ctxt);
     }
 
     protected Properties _loadProperties(Reader r0, IOContext ctxt)
@@ -265,10 +270,11 @@ public class JavaPropsFactory extends JsonFactory
     private final JavaPropsGenerator _createJavaPropsGenerator(IOContext ctxt,
             int stdFeat, ObjectCodec codec, OutputStream out) throws IOException
     {
-//        return new JavaPropsGenerator(ctxt, stdFeat, _objectCodec, out);
-        return null;
+        return new JavaPropsGenerator(ctxt, _createWriter(out, null, ctxt),
+                stdFeat, _objectCodec);
+                
     }
-    
+
     /*
     public static void main(String[] args) throws Exception
     {
