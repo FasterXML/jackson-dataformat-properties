@@ -6,13 +6,6 @@ import com.fasterxml.jackson.core.*;
 public class JPropWriteContext
     extends JsonStreamContext
 {
-    public final static int STATUS_OK_AS_IS = 0;
-    public final static int STATUS_OK_AFTER_COMMA = 1;
-    public final static int STATUS_OK_AFTER_COLON = 2;
-    public final static int STATUS_OK_AFTER_SPACE = 3; // in root context
-    public final static int STATUS_EXPECT_VALUE = 4;
-    public final static int STATUS_EXPECT_NAME = 5;
-
     /**
      * Parent context for this context; null for root context.
      */
@@ -106,37 +99,41 @@ public class JPropWriteContext
     /**********************************************************
      */
 
-    public int writeFieldName(String name) throws JsonProcessingException {
+    public boolean writeFieldName(String name) throws JsonProcessingException {
         if (_gotName) {
-            return STATUS_EXPECT_VALUE;
+            return false;
         }
         _gotName = true;
         _currentName = name;
-        return (_index < 0) ? STATUS_OK_AS_IS : STATUS_OK_AFTER_COMMA;
+        return true;
     }
 
-    public int writeValue() {
+    public boolean writeValue() {
         // Most likely, object:
         if (_type == TYPE_OBJECT) {
             if (!_gotName) {
-                return STATUS_EXPECT_NAME;
+                return false;
             }
             _gotName = false;
-            ++_index;
-            return STATUS_OK_AFTER_COLON;
-        }
-
         // Ok, array?
-        if (_type == TYPE_ARRAY) {
-            int ix = _index;
-            ++_index;
-            return (ix < 0) ? STATUS_OK_AS_IS : STATUS_OK_AFTER_COMMA;
+        } else if (_type != TYPE_ARRAY) {
+            // root context won't work with properties
+            return false;
         }
-        
-        // Nope, root context
-        // No commas within root context, but need space
         ++_index;
-        return (_index == 0) ? STATUS_OK_AS_IS : STATUS_OK_AFTER_SPACE;
+        return true;
+    }
+
+    public void truncatePath(StringBuilder sb) {
+        int len = sb.length();
+        if (len != _basePathLength) {
+            if (len < _basePathLength) { // sanity check
+                throw new IllegalStateException(String.format
+                        ("Internal error: base path length %d, buffered %d, trying to truncate",
+                                _basePathLength, len));
+            }
+            sb.setLength(_basePathLength);
+        }
     }
     
     /*

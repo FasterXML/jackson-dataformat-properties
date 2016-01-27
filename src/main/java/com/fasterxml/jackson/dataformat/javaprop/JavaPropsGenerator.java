@@ -78,6 +78,8 @@ public class JavaPropsGenerator extends GeneratorBase
      */
     protected final int _outputEnd;
 
+    protected final StringBuilder _basePath = new StringBuilder(50);
+    
     /*
     /**********************************************************
     /* Life-cycle
@@ -206,10 +208,19 @@ public class JavaPropsGenerator extends GeneratorBase
     @Override
     public void writeFieldName(String name) throws IOException
     {
-        if (_jpropContext.writeFieldName(name) == JPropWriteContext.STATUS_EXPECT_VALUE) {
+        if (!_jpropContext.writeFieldName(name)) {
             _reportError("Can not write a field name, expecting a value");
         }
-        // TODO: actual addition of name
+        // Ok; append to base path at this point.
+        // First: ensure possibly preceding field name is removed:
+        _jpropContext.truncatePath(_basePath);
+        if (_basePath.length() > 0) {
+            String sep = _schema.pathSeparator();
+            if (!sep.isEmpty()) {
+                _writeRaw(sep);
+            }
+        }
+        _writeEscapedKey(name);
     }
 
     /*
@@ -221,17 +232,17 @@ public class JavaPropsGenerator extends GeneratorBase
     @Override
     public void writeStartArray() throws IOException {
         _verifyValueWrite("start an array");
-        _writeContext = _writeContext.createChildArrayContext();
+        _jpropContext = _jpropContext.createChildArrayContext(_basePath.length());
 
         // !!! TODO
     }
 
     @Override
     public void writeEndArray() throws IOException {
-        if (!_writeContext.inArray()) {
-            _reportError("Current context not an ARRAY but "+_writeContext.getTypeDesc());
+        if (!_jpropContext.inArray()) {
+            _reportError("Current context not an ARRAY but "+_jpropContext.getTypeDesc());
         }
-        _writeContext = _writeContext.getParent();
+        _jpropContext = _jpropContext.getParent();
 
         // !!! TODO
     }
@@ -239,6 +250,7 @@ public class JavaPropsGenerator extends GeneratorBase
     @Override
     public void writeStartObject() throws IOException {
         _verifyValueWrite("start an object");
+        _jpropContext = _jpropContext.createChildObjectContext(_basePath.length());
 
         // !!! TODO
     }
@@ -246,10 +258,10 @@ public class JavaPropsGenerator extends GeneratorBase
     @Override
     public void writeEndObject() throws IOException
     {
-        if (!_writeContext.inObject()) {
-            _reportError("Current context not an object but "+_writeContext.getTypeDesc());
+        if (!_jpropContext.inObject()) {
+            _reportError("Current context not an object but "+_jpropContext.getTypeDesc());
         }
-        _writeContext = _writeContext.getParent();
+        _jpropContext = _jpropContext.getParent();
 
         // !!! TODO
     }
@@ -452,10 +464,32 @@ public class JavaPropsGenerator extends GeneratorBase
     }
 
     @Override
-    protected void _verifyValueWrite(String typeMsg) throws IOException {
-        int status = _jpropContext.writeValue();
-        if (status == JPropWriteContext.STATUS_EXPECT_NAME) {
+    protected void _verifyValueWrite(String typeMsg) throws IOException
+    {
+        // first, check that name/value cadence works
+        if (!_jpropContext.writeValue()) {
             _reportError("Can not "+typeMsg+", expecting field name");
+        }
+        // and if so, update path if we are in array
+        if (_jpropContext.inArray()) {
+            // remove possible path remnants from an earlier sibling
+            _jpropContext.truncatePath(_basePath);
+            String ixStr = String.valueOf(_jpropContext.getCurrentIndex() + _schema.firstArrayOffset());
+            if (_schema.writeIndexUsingMarkers()) {
+                // no leading path separator, if using enclosed indexes
+                _writeRaw(_schema.indexStartMarker());
+                _writeRaw(ixStr);
+                _writeRaw(_schema.indexEndMarker());
+            } else {
+                // leading path separator, if using "simple" index markers
+                if (_basePath.length() > 0) {
+                    String sep = _schema.pathSeparator();
+                    if (!sep.isEmpty()) {
+                        _writeRaw(sep);
+                    }
+                }
+                _writeRaw(ixStr);
+            }
         }
     }
 
@@ -484,6 +518,11 @@ public class JavaPropsGenerator extends GeneratorBase
     }
 
     protected void _writeEscaped(String value) throws IOException
+    {
+        // !!! TODO
+    }
+
+    protected void _writeEscapedKey(String value) throws IOException
     {
         // !!! TODO
     }
