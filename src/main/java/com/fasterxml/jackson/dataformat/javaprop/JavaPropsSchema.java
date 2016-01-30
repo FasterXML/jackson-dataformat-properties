@@ -1,6 +1,7 @@
 package com.fasterxml.jackson.dataformat.javaprop;
 
 import com.fasterxml.jackson.core.FormatSchema;
+import com.fasterxml.jackson.dataformat.javaprop.util.Markers;
 
 /**
  * Simple {@link FormatSchema} sub-type that defines properties of
@@ -15,6 +16,8 @@ public class JavaPropsSchema
     java.io.Serializable
 {
     private static final long serialVersionUID = 1L; // 2.5
+
+    protected final static Markers DEFAULT_INDEX_MARKER = new Markers("[", "]");
 
     protected final static JavaPropsSchema EMPTY = new JavaPropsSchema();
     
@@ -56,13 +59,7 @@ public class JavaPropsSchema
      * Default value of "[" is usually combined with end marker of "]" to allow
      * C/Java-style bracket notation, like "settings.path[1]".
      */
-    protected String _indexStartMarker = "[";
-
-    /**
-     * Default end marker for index access, if any ; empty String may be used
-     * to indicate no marker-based index detection should be made.
-     */
-    protected String _indexEndMarker = "]";
+    protected Markers _indexMarker = DEFAULT_INDEX_MARKER;
     
     /*
     /**********************************************************************
@@ -160,13 +157,9 @@ public class JavaPropsSchema
     public String header() {
         return _header;
     }
-    
-    public String indexStartMarker() {
-        return _indexStartMarker;
-    }
 
-    public String indexEndMarker() {
-        return _indexEndMarker;
+    public Markers indexMarker() {
+        return _indexMarker;
     }
 
     public String lineEnding() {
@@ -190,6 +183,6 @@ public class JavaPropsSchema
     }
 
     public boolean writeIndexUsingMarkers() {
-        return _writeIndexUsingMarkers;
+        return _writeIndexUsingMarkers && (_indexMarker != null);
     }
 }
