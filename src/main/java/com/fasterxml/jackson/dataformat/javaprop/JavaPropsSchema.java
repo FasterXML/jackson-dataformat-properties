@@ -143,7 +143,7 @@ public class JavaPropsSchema
     public static JavaPropsSchema emptySchema() {
         return EMPTY;
     }
-    
+
     /*
     /**********************************************************************
     /* Public API, extended, properties

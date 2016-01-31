@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.json.JsonWriteContext;
 import com.fasterxml.jackson.dataformat.javaprop.util.JPropEscapes;
 import com.fasterxml.jackson.dataformat.javaprop.util.JPropWriteContext;
+import com.fasterxml.jackson.dataformat.javaprop.util.Markers;
 
 public class JavaPropsGenerator extends GeneratorBase
 {
@@ -484,10 +485,11 @@ public class JavaPropsGenerator extends GeneratorBase
             _jpropContext.truncatePath(_basePath);
             int ix = _jpropContext.getCurrentIndex() + _schema.firstArrayOffset();
             if (_schema.writeIndexUsingMarkers()) {
+                Markers m = _schema.indexMarker();
                 // no leading path separator, if using enclosed indexes
-                _basePath.append(_schema.indexStartMarker());
+                _basePath.append(m.getStart());
                 _basePath.append(ix);
-                _basePath.append(_schema.indexEndMarker());
+                _basePath.append(m.getEnd());
             } else {
                 // leading path separator, if using "simple" index markers
                 if (_basePath.length() > 0) {
