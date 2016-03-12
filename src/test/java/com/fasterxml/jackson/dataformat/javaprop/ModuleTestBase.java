@@ -2,6 +2,7 @@ package com.fasterxml.jackson.dataformat.javaprop;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,6 +10,38 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 public abstract class ModuleTestBase extends junit.framework.TestCase
 {
+    @JsonPropertyOrder({ "topLeft", "bottomRight" })
+    static class Rectangle {
+        public Point topLeft;
+        public Point bottomRight;
+
+        protected Rectangle() { }
+        public Rectangle(Point p1, Point p2) {
+            topLeft = p1;
+            bottomRight = p2;
+        }
+    }
+
+    @JsonPropertyOrder({ "x", "y" })
+    static class Point {
+        public int x, y;
+        
+        protected Point() { }
+        public Point(int x0, int y0) {
+            x = x0;
+            y = y0;
+        }
+    }
+
+    static class Points {
+        public List<Point> p;
+
+        protected Points() { }
+        public Points(Point... p0) {
+            p = Arrays.asList(p0);
+        }
+    }
+
     public enum Gender { MALE, FEMALE };
 
     /**

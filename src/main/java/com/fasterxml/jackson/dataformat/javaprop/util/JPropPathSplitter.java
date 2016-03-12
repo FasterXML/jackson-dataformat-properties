@@ -33,6 +33,7 @@ public abstract class JPropPathSplitter
             // otherwise it's still quite simple
             return new PathOnlySplitter(sep, schema.parseSimpleIndexes());
         }
+        /*
         // Yes, got index marker to use. But how about separator?
         if (sep.isEmpty()) { // no separator, just index. Unusual...
             
@@ -42,6 +43,9 @@ public abstract class JPropPathSplitter
 
         // !!! TBI
         throw new IllegalStateException("Handling of Indexes not yet supported");
+        */
+
+        return new PathOnlySplitter(sep, schema.parseSimpleIndexes());
     }
 
     /**
@@ -73,7 +77,7 @@ public abstract class JPropPathSplitter
     protected int _asInt(String segment) {
         final int len = segment.length();
         if (len > 0) {
-            for (int i = 1; i < len; ++i) {
+            for (int i = 0; i < len; ++i) {
                 char c = segment.charAt(i);
                 if ((c > '9') || (c < '0')) {
                     return -1;
@@ -143,7 +147,7 @@ public abstract class JPropPathSplitter
             final int keyLen = key.length();
 
             while (true) {
-                int ix = key.indexOf(_pathSeparator);
+                int ix = key.indexOf(_pathSeparator, start);
                 if (ix < 0) {
                     break;
                 }

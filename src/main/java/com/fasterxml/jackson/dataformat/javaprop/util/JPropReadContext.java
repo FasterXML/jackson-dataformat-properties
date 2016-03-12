@@ -215,14 +215,15 @@ public abstract class JPropReadContext
                 _state = STATE_CONTENT_KEY;
                 return JsonToken.VALUE_STRING;
             case STATE_CONTENT_KEY:
-                Map.Entry<String, JPropNode> entry = _contents.next();
-                if (entry == null) {
+                if (!_contents.hasNext()) {
                     _state = STATE_END;
                     _nextNode = null;
                     return JsonToken.END_OBJECT;
                 }
+                Map.Entry<String, JPropNode> entry = _contents.next();
                 _currentName = entry.getKey();
                 _nextNode = entry.getValue();
+                _state = STATE_CONTENT_VALUE;
                 return JsonToken.FIELD_NAME;
             case STATE_CONTENT_VALUE:
                 // Simple textual leaf?

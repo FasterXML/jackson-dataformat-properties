@@ -3,17 +3,20 @@ package com.fasterxml.jackson.dataformat.javaprop;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Properties;
 
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.core.base.ParserBase;
+import com.fasterxml.jackson.core.base.ParserMinimalBase;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.util.ByteArrayBuilder;
 import com.fasterxml.jackson.dataformat.javaprop.util.JPropNode;
 import com.fasterxml.jackson.dataformat.javaprop.util.JPropNodeBuilder;
 import com.fasterxml.jackson.dataformat.javaprop.util.JPropReadContext;
 
-public class JavaPropsParser extends ParserBase
+public class JavaPropsParser extends ParserMinimalBase
 {
     protected final static JavaPropsSchema DEFAULT_SCHEMA = new JavaPropsSchema();
     
@@ -43,7 +46,7 @@ public class JavaPropsParser extends ParserBase
     /**
      * Schema we use for parsing Properties into structure of some kind.
      */
-    protected JavaPropsSchema _schema;
+    protected JavaPropsSchema _schema = DEFAULT_SCHEMA;
 
     /*
     /**********************************************************
@@ -53,10 +56,17 @@ public class JavaPropsParser extends ParserBase
     
     protected JPropReadContext _readContext;
 
-    /**
-     * State flag we need due to lazily constructing {@link #_readContext}.
+    protected boolean _closed;
+
+    /*
+    /**********************************************************
+    /* Recycled helper objects
+    /**********************************************************
      */
-    protected boolean _converted;
+    
+    protected ByteArrayBuilder _byteArrayBuilder;
+    
+    protected byte[] _binaryValue;
     
     /*
     /**********************************************************
@@ -67,7 +77,7 @@ public class JavaPropsParser extends ParserBase
     public JavaPropsParser(IOContext ctxt, Object inputSource,
             int parserFeatures, ObjectCodec codec, Properties sourceProps)
     {
-        super(ctxt, parserFeatures);
+        super(parserFeatures);
         _objectCodec = codec;
         _inputSource = inputSource;
         _sourceProperties = sourceProps;
@@ -106,6 +116,17 @@ public class JavaPropsParser extends ParserBase
         // see the input so:
         return -1;
     }
+
+    @Override
+    public void close() throws IOException {
+        _closed = true;
+        _readContext = null;
+    }
+
+    @Override
+    public boolean isClosed() {
+        return _closed;
+    }
     
     /*
     /**********************************************************
@@ -127,7 +148,7 @@ public class JavaPropsParser extends ParserBase
     public Object getInputSource() {
         return _inputSource;
     }
-    
+
     /*
     /**********************************************************
     /* Overrides: capability introspection methods
@@ -147,20 +168,51 @@ public class JavaPropsParser extends ParserBase
 
     @Override
     public boolean canReadTypeId() { return false; }
-    
+
     /*
     /**********************************************************
-    /* Main parsing API
+    /* Public API, structural
     /**********************************************************
      */
 
     @Override
+    public JsonStreamContext getParsingContext() {
+        return _readContext;
+    }
+
+    @Override
+    public void overrideCurrentName(String name) {
+        _readContext.overrideCurrentName(name);
+    }
+
+    /*
+    /**********************************************************
+    /* Main parsing API, textual values
+    /**********************************************************
+     */
+
+    @Override
+    public String getCurrentName() throws IOException {
+        if (_readContext == null) {
+            return null;
+        }
+        // [JACKSON-395]: start markers require information from parent
+        if (_currToken == JsonToken.START_OBJECT || _currToken == JsonToken.START_ARRAY) {
+            JPropReadContext parent = _readContext.getParent();
+            if (parent != null) {
+                return parent.getCurrentName();
+            }
+        }
+        return _readContext.getCurrentName();
+    }
+
+    @Override
     public JsonToken nextToken() throws IOException {
         if (_readContext == null) {
-            if (_converted) {
+            if (_closed) {
                 return null;
             }
-            _converted = true;
+            _closed = true;
             JPropNode root = JPropNodeBuilder.build(_schema, _sourceProperties);
             _readContext = JPropReadContext.create(root);
         }
@@ -188,6 +240,11 @@ public class JavaPropsParser extends ParserBase
     }
 
     @Override
+    public boolean hasTextCharacters() {
+        return false;
+    }
+    
+    @Override
     public char[] getTextCharacters() throws IOException {
         String text = getText();
         return (text == null) ? null : text.toCharArray();
@@ -204,7 +261,6 @@ public class JavaPropsParser extends ParserBase
         return 0;
     }
 
-    // TODO: can remove from 2.8 or so (base impl added in 2.7.1)
     @SuppressWarnings("resource")
     @Override
     public byte[] getBinaryValue(Base64Variant variant) throws IOException
@@ -220,25 +276,98 @@ public class JavaPropsParser extends ParserBase
         return _binaryValue;
     }
 
+    public ByteArrayBuilder _getByteArrayBuilder()
+    {
+        if (_byteArrayBuilder == null) {
+            _byteArrayBuilder = new ByteArrayBuilder();
+        } else {
+            _byteArrayBuilder.reset();
+        }
+        return _byteArrayBuilder;
+    }
+
     /*
     /**********************************************************
-    /* Implementations of abstract helper methods
+    /* Other accessor overrides
     /**********************************************************
      */
 
     @Override
-    protected boolean loadMore() throws IOException {
-        _reportUnsupportedOperation();
-        return false;
+    public Object getEmbeddedObject() throws IOException {
+        return null;
     }
     
     @Override
-    protected void _finishString() throws IOException {
-        _reportUnsupportedOperation();
+    public JsonLocation getTokenLocation() {
+        return JsonLocation.NA;
     }
 
     @Override
-    protected void _closeInput() throws IOException {
-        // nothing to do here
+    public JsonLocation getCurrentLocation() {
+        return JsonLocation.NA;
+    }
+
+    /*
+    /**********************************************************
+    /* Main parsing API, textual values
+    /**********************************************************
+     */
+    
+    @Override
+    public Number getNumberValue() throws IOException {
+        return _noNumbers();
+    }
+    
+    @Override
+    public NumberType getNumberType() throws IOException {
+        return _noNumbers();
+    }
+
+    @Override
+    public int getIntValue() throws IOException {
+        return _noNumbers();
+    }
+
+    @Override
+    public long getLongValue() throws IOException {
+        return _noNumbers();
+    }
+
+    @Override
+    public BigInteger getBigIntegerValue() throws IOException {
+        return _noNumbers();
+    }
+
+    @Override
+    public float getFloatValue() throws IOException {
+        return _noNumbers();
+    }
+
+    @Override
+    public double getDoubleValue() throws IOException {
+        return _noNumbers();
+    }
+
+    @Override
+    public BigDecimal getDecimalValue() throws IOException {
+        return _noNumbers();
+    }
+
+    /*
+    /**********************************************************
+    /* Internal helper methods
+    /**********************************************************
+     */
+
+    protected <T> T _noNumbers() throws IOException {
+        _reportError("Current token ("+_currToken+") not numeric, can not use numeric value accessors");
+        return null;
+    }
+
+    @Override
+    protected void _handleEOF() throws JsonParseException {
+        if ((_readContext != null) && !_readContext.inRoot()) {
+            _reportInvalidEOF(": expected close marker for "+_readContext.getTypeDesc());
+        }
     }
 }
