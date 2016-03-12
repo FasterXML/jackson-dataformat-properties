@@ -112,7 +112,7 @@ public class JavaPropsFactory extends JsonFactory
     public boolean canUseSchema(FormatSchema schema) {
         return schema instanceof JavaPropsSchema;
     }
-    
+
     /*
     /**********************************************************
     /* Overridden parser factory methods
@@ -190,14 +190,14 @@ public class JavaPropsFactory extends JsonFactory
     {
         Properties props = _loadProperties(in, ctxt);
         // !!! TODO
-        return new JavaPropsParser(ctxt, _parserFeatures, _objectCodec);
+        return new JavaPropsParser(ctxt, in, _parserFeatures, _objectCodec, props);
     }
 
     @Override
     protected JsonParser _createParser(Reader r, IOContext ctxt) throws IOException {
         Properties props = _loadProperties(r, ctxt);
         // !!! TODO
-        return new JavaPropsParser(ctxt, _parserFeatures, _objectCodec);
+        return new JavaPropsParser(ctxt, r, _parserFeatures, _objectCodec, props);
     }
 
     @Override

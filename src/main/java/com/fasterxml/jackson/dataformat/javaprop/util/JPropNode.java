@@ -29,9 +29,12 @@ public class JPropNode
      */
     protected Map<String, JPropNode> _byName;
 
-    public void setValue(String v) {
+    protected boolean _hasContents = false;
+    
+    public JPropNode setValue(String v) {
         // should we care about overwrite?
         _value = v;
+        return this;
     }
 
     public JPropNode addByIndex(int index) {
@@ -39,6 +42,7 @@ public class JPropNode
         if (_byName != null) {
             return addByName(String.valueOf(index));
         }
+        _hasContents = true;
         if (_byIndex == null) {
             _byIndex = new LinkedHashMap<>();
         }
@@ -53,6 +57,7 @@ public class JPropNode
     
     public JPropNode addByName(String name) {
         // if former index entries, first coerce them
+        _hasContents = true;
         if (_byIndex != null) {
             for (Map.Entry<Integer, JPropNode> entry : _byIndex.entrySet()) {
                 _byName.put(entry.getKey().toString(), entry.getValue());
@@ -70,5 +75,28 @@ public class JPropNode
         JPropNode result = new JPropNode();
         _byName.put(name, result);
         return result;
+    }
+
+    public boolean isLeaf() {
+        return !_hasContents && (_value != null);
+    }
+
+    public boolean isArray() {
+        return _byIndex != null;
+    }
+
+    public String getValue() {
+        return _value;
+    }
+
+    public Iterator<JPropNode> arrayContents() {
+        return _byIndex.values().iterator();
+    }
+
+    /**
+     * Child entries accessed with String property name, if any.
+     */
+    public Iterator<Map.Entry<String, JPropNode>> objectContents() {
+        return _byName.entrySet().iterator();
     }
 }

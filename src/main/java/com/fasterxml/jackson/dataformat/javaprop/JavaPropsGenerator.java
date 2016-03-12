@@ -140,24 +140,40 @@ public class JavaPropsGenerator extends GeneratorBase
         return this;
     }
 
-    /*
     @Override
     public Object getOutputTarget() {
-        return _writer;
+        return _out;
     }
 
+    /*
     @Override
     public int getOutputBuffered() {
         return -1;
     }
     */
 
+    /*
+    /**********************************************************
+    /* Overrides: capability introspection methods
+    /**********************************************************
+     */
+    
     @Override
     public boolean canUseSchema(FormatSchema schema) {
         return schema instanceof JavaPropsSchema;
     }
-    
-    //@Override public void setSchema(FormatSchema schema)
+
+    @Override
+    public boolean canWriteObjectId() { return false; }
+
+    @Override
+    public boolean canWriteTypeId() { return false; }
+
+    @Override
+    public boolean canWriteBinaryNatively() { return false; }
+
+    @Override
+    public boolean canOmitFields() { return true; }
     
     // No Format Features yet
 /*

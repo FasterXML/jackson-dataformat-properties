@@ -6,10 +6,6 @@ import com.fasterxml.jackson.dataformat.javaprop.util.Markers;
 /**
  * Simple {@link FormatSchema} sub-type that defines properties of
  * a CSV document to read or write.
- * Properties supported currently are:
- *<ul>
- *   TODO
- *</ul>
  */
 public class JavaPropsSchema
     implements FormatSchema,
@@ -60,7 +56,7 @@ public class JavaPropsSchema
      * C/Java-style bracket notation, like "settings.path[1]".
      */
     protected Markers _indexMarker = DEFAULT_INDEX_MARKER;
-    
+
     /*
     /**********************************************************************
     /* Formatting constants for input(-only)
@@ -128,7 +124,7 @@ public class JavaPropsSchema
      * (leading '#' or '!') and linefeeds MUST be specified by caller.
      */
     protected String _header = "";
-    
+
     /*
     /**********************************************************************
     /* Public API, FormatSchema
