@@ -148,18 +148,18 @@ public abstract class JPropReadContext
         {
             switch (_state) {
             case STATE_START: // START_ARRAY
-                _state = (_branchText == null) ? STATE_BRANCH_VALUE : STATE_CONTENT_VALUE;
+                _state = (_branchText == null) ? STATE_CONTENT_VALUE : STATE_BRANCH_VALUE;
                 return JsonToken.START_ARRAY;
             case STATE_BRANCH_VALUE:
                 _state = STATE_CONTENT_VALUE;
                 _currentText = _branchText;
                 return JsonToken.VALUE_STRING;
             case STATE_CONTENT_VALUE:
-                _nextNode = _contents.next();
-                if (_nextNode == null) {
+                if (!_contents.hasNext()) {
                     _state = STATE_END;
                     return JsonToken.END_ARRAY;
                 }
+                _nextNode = _contents.next();
                 if (_nextNode.isLeaf()) {
                     _currentText = _nextNode.getValue();
                     return JsonToken.VALUE_STRING;
@@ -181,8 +181,8 @@ public abstract class JPropReadContext
         extends JPropReadContext
     {
         final static int STATE_START = 0; // before START_OBJECT
-        final static int STATE_VALUE_KEY = 1;
-        final static int STATE_VALUE_VALUE = 2;
+        final static int STATE_BRANCH_KEY = 1; // if (and only if) we have intermediate node ("branch") value
+        final static int STATE_BRANCH_VALUE = 2;
         final static int STATE_CONTENT_KEY = 3;
         final static int STATE_CONTENT_VALUE = 4;
         final static int STATE_END = 5; // after END_OBJECT
@@ -204,13 +204,13 @@ public abstract class JPropReadContext
         {
             switch (_state) {
             case STATE_START: // START_OBJECT
-                _state = (_branchText == null) ? STATE_CONTENT_KEY : STATE_VALUE_KEY;
+                _state = (_branchText == null) ? STATE_CONTENT_KEY : STATE_BRANCH_KEY;
                 return JsonToken.START_OBJECT;
-            case STATE_VALUE_KEY:
+            case STATE_BRANCH_KEY:
                 _currentName = "";
-                _state = STATE_VALUE_VALUE;
+                _state = STATE_BRANCH_VALUE;
                 return JsonToken.FIELD_NAME;
-            case STATE_VALUE_VALUE:
+            case STATE_BRANCH_VALUE:
                 _currentText = _branchText;
                 _state = STATE_CONTENT_KEY;
                 return JsonToken.VALUE_STRING;

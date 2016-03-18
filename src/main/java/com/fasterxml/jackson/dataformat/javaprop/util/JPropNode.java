@@ -22,7 +22,7 @@ public class JPropNode
     /**
      * Child entries with integral number index, if any.
      */
-    protected Map<Integer, JPropNode> _byIndex;
+    protected TreeMap<Integer, JPropNode> _byIndex;
 
     /**
      * Child entries accessed with String property name, if any.
@@ -44,7 +44,7 @@ public class JPropNode
         }
         _hasContents = true;
         if (_byIndex == null) {
-            _byIndex = new LinkedHashMap<>();
+            _byIndex = new TreeMap<>();
         }
         Integer key = Integer.valueOf(index);
         JPropNode n = _byIndex.get(key);
