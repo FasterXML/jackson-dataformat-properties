@@ -1,4 +1,4 @@
-package com.fasterxml.jackson.dataformat.javaprop.util;
+package com.fasterxml.jackson.dataformat.javaprop.io;
 
 /**
  * Container class for definitions of characters to escape.

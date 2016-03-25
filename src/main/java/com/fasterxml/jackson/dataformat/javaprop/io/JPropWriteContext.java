@@ -1,4 +1,4 @@
-package com.fasterxml.jackson.dataformat.javaprop.util;
+package com.fasterxml.jackson.dataformat.javaprop.io;
 
 import com.fasterxml.jackson.core.*;
 //import com.fasterxml.jackson.core.json.JsonWriteContext;

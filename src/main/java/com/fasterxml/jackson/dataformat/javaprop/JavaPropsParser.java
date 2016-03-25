@@ -11,9 +11,9 @@ import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.core.base.ParserMinimalBase;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.util.ByteArrayBuilder;
+import com.fasterxml.jackson.dataformat.javaprop.io.JPropReadContext;
 import com.fasterxml.jackson.dataformat.javaprop.util.JPropNode;
 import com.fasterxml.jackson.dataformat.javaprop.util.JPropNodeBuilder;
-import com.fasterxml.jackson.dataformat.javaprop.util.JPropReadContext;
 
 public class JavaPropsParser extends ParserMinimalBase
 {

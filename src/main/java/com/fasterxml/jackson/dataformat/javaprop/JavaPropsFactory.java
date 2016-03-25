@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.core.format.InputAccessor;
 import com.fasterxml.jackson.core.format.MatchStrength;
 import com.fasterxml.jackson.core.io.IOContext;
+import com.fasterxml.jackson.dataformat.javaprop.io.Latin1Reader;
 
 public class JavaPropsFactory extends JsonFactory
 {
@@ -244,12 +245,13 @@ public class JavaPropsFactory extends JsonFactory
     /******************************************************
      */
 
+    @SuppressWarnings("resource")
     protected Properties _loadProperties(InputStream in, IOContext ctxt)
         throws IOException
     {
         // NOTE: Properties default to ISO-8859-1 (aka Latin-1), NOT UTF-8; this
         // as per JDK documentation
-        return _loadProperties(new InputStreamReader(in, CHARSET_ID_LATIN1), ctxt);
+        return _loadProperties(new Latin1Reader(ctxt, in), ctxt);
     }
 
     protected Properties _loadProperties(Reader r0, IOContext ctxt)

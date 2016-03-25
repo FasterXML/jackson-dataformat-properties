@@ -9,8 +9,8 @@ import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.core.base.GeneratorBase;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.json.JsonWriteContext;
-import com.fasterxml.jackson.dataformat.javaprop.util.JPropEscapes;
-import com.fasterxml.jackson.dataformat.javaprop.util.JPropWriteContext;
+import com.fasterxml.jackson.dataformat.javaprop.io.JPropEscapes;
+import com.fasterxml.jackson.dataformat.javaprop.io.JPropWriteContext;
 import com.fasterxml.jackson.dataformat.javaprop.util.Markers;
 
 public class JavaPropsGenerator extends GeneratorBase

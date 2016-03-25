@@ -1,8 +1,9 @@
-package com.fasterxml.jackson.dataformat.javaprop.util;
+package com.fasterxml.jackson.dataformat.javaprop.io;
 
 import java.util.*;
 
 import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.dataformat.javaprop.util.JPropNode;
 
 /**
  * Helper class used to keep track of traversal over contents of
