@@ -116,32 +116,47 @@ public class JavaPropsFactory extends JsonFactory
 
     /*
     /**********************************************************
+    /* Extended parser factory methods
+    /**********************************************************
+     */
+
+    /**
+     * Convenience method to allow feeding a pre-parsed {@link Properties}
+     * instance as input.
+     */
+    public JsonParser createParser(Properties props) throws IOException {
+        return new JavaPropsParser(_createContext(props, true),
+                props, _parserFeatures, _objectCodec, props);
+    }
+    
+    /*
+    /**********************************************************
     /* Overridden parser factory methods
     /**********************************************************
      */
 
     @Override
-    public JavaPropsParser createParser(File f) throws IOException {
+    public JsonParser createParser(File f) throws IOException {
         return _createParser(new FileInputStream(f), _createContext(f, true));
     }
 
     @Override
-    public JavaPropsParser createParser(URL url) throws IOException {
+    public JsonParser createParser(URL url) throws IOException {
         return _createParser(_optimizedStreamFromURL(url), _createContext(url, true));
     }
 
     @Override
-    public JavaPropsParser createParser(InputStream in) throws IOException {
+    public JsonParser createParser(InputStream in) throws IOException {
         return _createParser(in, _createContext(in, false));
     }
 
     @Override
-    public JavaPropsParser createParser(byte[] data) throws IOException {
+    public JsonParser createParser(byte[] data) throws IOException {
         return _createParser(data, 0, data.length, _createContext(data, true));
     }
 
     @Override
-    public JavaPropsParser createParser(byte[] data, int offset, int len) throws IOException {
+    public JsonParser createParser(byte[] data, int offset, int len) throws IOException {
         return _createParser(data, offset, len, _createContext(data, true));
     }
 
@@ -152,7 +167,7 @@ public class JavaPropsFactory extends JsonFactory
      */
 
     @Override
-    public JavaPropsGenerator createGenerator(OutputStream out, JsonEncoding enc) throws IOException {
+    public JsonGenerator createGenerator(OutputStream out, JsonEncoding enc) throws IOException {
         IOContext ctxt = _createContext(out, false);
         ctxt.setEncoding(enc);
         out = _decorate(out, ctxt);
@@ -167,7 +182,7 @@ public class JavaPropsFactory extends JsonFactory
      * to be passed to this method.
      */
     @Override
-    public JavaPropsGenerator createGenerator(OutputStream out) throws IOException {
+    public JsonGenerator createGenerator(OutputStream out) throws IOException {
         IOContext ctxt = _createContext(out, false);
         out = _decorate(out, ctxt);
         return _createJavaPropsGenerator(ctxt, _generatorFeatures, _objectCodec, out);
@@ -187,17 +202,15 @@ public class JavaPropsFactory extends JsonFactory
     */
 
     @Override
-    protected JavaPropsParser _createParser(InputStream in, IOContext ctxt) throws IOException
+    protected JsonParser _createParser(InputStream in, IOContext ctxt) throws IOException
     {
         Properties props = _loadProperties(in, ctxt);
-        // !!! TODO
         return new JavaPropsParser(ctxt, in, _parserFeatures, _objectCodec, props);
     }
 
     @Override
     protected JsonParser _createParser(Reader r, IOContext ctxt) throws IOException {
         Properties props = _loadProperties(r, ctxt);
-        // !!! TODO
         return new JavaPropsParser(ctxt, r, _parserFeatures, _objectCodec, props);
     }
 
@@ -208,10 +221,11 @@ public class JavaPropsFactory extends JsonFactory
         return _createParser(new CharArrayReader(data, offset, len), ctxt);
     }
 
+    @SuppressWarnings("resource")
     @Override
-    protected JavaPropsParser _createParser(byte[] data, int offset, int len, IOContext ctxt) throws IOException
+    protected JsonParser _createParser(byte[] data, int offset, int len, IOContext ctxt) throws IOException
     {
-        return _createParser(new ByteArrayInputStream(data, offset, len), ctxt);
+        return _createParser(new Latin1Reader(ctxt, data, offset, len), ctxt);
     }
 
     /*
@@ -221,13 +235,13 @@ public class JavaPropsFactory extends JsonFactory
      */
     
     @Override
-    protected JavaPropsGenerator _createGenerator(Writer out, IOContext ctxt) throws IOException
+    protected JsonGenerator _createGenerator(Writer out, IOContext ctxt) throws IOException
     {
         return new JavaPropsGenerator(ctxt, out, _generatorFeatures, _objectCodec);
     }
 
     @Override
-    protected JavaPropsGenerator _createUTF8Generator(OutputStream out, IOContext ctxt) throws IOException {
+    protected JsonGenerator _createUTF8Generator(OutputStream out, IOContext ctxt) throws IOException {
         return _createJavaPropsGenerator(ctxt, _generatorFeatures, _objectCodec, out);
     }
 
@@ -269,7 +283,7 @@ public class JavaPropsFactory extends JsonFactory
         return props;
     }
 
-    private final JavaPropsGenerator _createJavaPropsGenerator(IOContext ctxt,
+    private final JsonGenerator _createJavaPropsGenerator(IOContext ctxt,
             int stdFeat, ObjectCodec codec, OutputStream out) throws IOException
     {
         return new JavaPropsGenerator(ctxt, _createWriter(out, null, ctxt),

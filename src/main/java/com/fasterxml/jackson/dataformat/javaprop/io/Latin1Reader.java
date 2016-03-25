@@ -55,6 +55,7 @@ public final class Latin1Reader extends Reader
         _inputPtr = ptr;
         _inputEnd = ptr+len;
     }
+    */
 
     public Latin1Reader(IOContext ctxt, byte[] buf, int ptr, int len)
     {
@@ -65,7 +66,6 @@ public final class Latin1Reader extends Reader
         _inputPtr = ptr;
         _inputEnd = ptr+len;
     }
-    */
 
     public Latin1Reader(IOContext ctxt, InputStream in)
     {

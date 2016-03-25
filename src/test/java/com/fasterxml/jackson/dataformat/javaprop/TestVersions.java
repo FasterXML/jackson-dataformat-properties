@@ -12,7 +12,7 @@ public class TestVersions extends ModuleTestBase
         assertVersion(f);
         JavaPropsParser p = (JavaPropsParser) f.createParser("abc=foo");
         assertVersion(p);
-        JavaPropsGenerator gen = f.createGenerator(new ByteArrayOutputStream());
+        JsonGenerator gen = f.createGenerator(new ByteArrayOutputStream());
         assertVersion(gen);
         p.close();
         gen.close();
