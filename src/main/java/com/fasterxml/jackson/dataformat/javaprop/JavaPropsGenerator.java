@@ -30,7 +30,6 @@ public class JavaPropsGenerator extends GeneratorBase
         EMPTY_SCHEMA = JavaPropsSchema.emptySchema();
     }
 
-    protected final int[] sKeyEscapes = JPropEscapes.getKeyEscapes();
     protected final int[] sValueEscapes = JPropEscapes.getValueEscapes();
     
     /*
@@ -244,8 +243,10 @@ public class JavaPropsGenerator extends GeneratorBase
                 _basePath.append(sep);
             }
         }
+        // Note that escaping needs to be applied now...
+        
+        JPropEscapes.appendKey(_basePath, name);
         // NOTE: we do NOT yet write the key; wait until we have value; just append to path
-        _basePath.append(name);
     }
 
     /*
@@ -258,8 +259,6 @@ public class JavaPropsGenerator extends GeneratorBase
     public void writeStartArray() throws IOException {
         _verifyValueWrite("start an array");
         _jpropContext = _jpropContext.createChildArrayContext(_basePath.length());
-
-        // !!! TODO
     }
 
     @Override
@@ -268,16 +267,12 @@ public class JavaPropsGenerator extends GeneratorBase
             _reportError("Current context not an ARRAY but "+_jpropContext.getTypeDesc());
         }
         _jpropContext = _jpropContext.getParent();
-
-        // !!! TODO
     }
 
     @Override
     public void writeStartObject() throws IOException {
         _verifyValueWrite("start an object");
         _jpropContext = _jpropContext.createChildObjectContext(_basePath.length());
-
-        // !!! TODO
     }
 
     @Override
@@ -287,8 +282,6 @@ public class JavaPropsGenerator extends GeneratorBase
             _reportError("Current context not an object but "+_jpropContext.getTypeDesc());
         }
         _jpropContext = _jpropContext.getParent();
-
-        // !!! TODO
     }
 
     /*
@@ -527,43 +520,47 @@ public class JavaPropsGenerator extends GeneratorBase
     
     protected void _writeEscapedEntry(String value) throws IOException
     {
-        _writeKey();
+        // note: key has been already escaped so:
+        _writeRaw(_basePath);
+        _writeRaw(_schema.keyValueSeparator());
+
         _writeEscaped(value);
         _writeLinefeed();
     }
 
     protected void _writeEscapedEntry(char[] text, int offset, int len) throws IOException
     {
-        _writeKey();
+        // note: key has been already escaped so:
+        _writeRaw(_basePath);
+        _writeRaw(_schema.keyValueSeparator());
+
         _writeEscaped(text, offset, len);
         _writeLinefeed();
     }
 
     protected void _writeUnescapedEntry(String value) throws IOException
     {
-        _writeKey();
+        // note: key has been already escaped so:
+        _writeRaw(_basePath);
+        _writeRaw(_schema.keyValueSeparator());
+
         _writeRaw(value);
         _writeLinefeed();
     }
 
     protected void _writeEscaped(String value) throws IOException
     {
-        // !!! TODO
-        _writeRaw(value);
+        StringBuilder sb = JPropEscapes.appendValue(value);
+        if (sb == null) {
+            _writeRaw(value);
+        } else {
+            _writeRaw(sb);
+        }
     }
 
     protected void _writeEscaped(char[] text, int offset, int len) throws IOException
     {
-        // !!! TODO
-        _writeRaw(text, offset, len);
-    }
-
-    protected void _writeKey() throws IOException
-    {
-        String key = _basePath.toString();
-        // !!! TODO
-        _writeRaw(key);
-        _writeRaw(_schema.lineKeyValueSeparator());
+        _writeEscaped(new String(text, offset, len));
     }
 
     protected void _writeLinefeed() throws IOException
@@ -571,12 +568,20 @@ public class JavaPropsGenerator extends GeneratorBase
         _writeRaw('\n');
         // !!! TODO
     }
-    
+
     /*
     /**********************************************************
     /* Internal methods; raw writes
     /**********************************************************
      */
+
+    protected void _writeRaw(char c) throws IOException
+    {
+        if (_outputTail >= _outputEnd) {
+            _flushBuffer();
+        }
+        _outputBuffer[_outputTail++] = c;
+    }
     
     public void _writeRaw(String text) throws IOException
     {
@@ -597,6 +602,25 @@ public class JavaPropsGenerator extends GeneratorBase
         }
     }
 
+    public void _writeRaw(StringBuilder text) throws IOException
+    {
+        // Nothing to check, can just output as is
+        int len = text.length();
+        int room = _outputEnd - _outputTail;
+
+        if (room == 0) {
+            _flushBuffer();
+            room = _outputEnd - _outputTail;
+        }
+        // But would it nicely fit in? If yes, it's easy
+        if (room >= len) {
+            text.getChars(0, len, _outputBuffer, _outputTail);
+            _outputTail += len;
+        } else {
+            _writeRawLong(text);
+        }
+    }
+    
     public void _writeRaw(String text, int start, int len) throws IOException
     {
         // Nothing to check, can just output as is
@@ -632,15 +656,29 @@ public class JavaPropsGenerator extends GeneratorBase
         _out.write(text, offset, len);
     }
 
-    protected void _writeRaw(char c) throws IOException
+    protected void _writeRawLong(String text) throws IOException
     {
-        if (_outputTail >= _outputEnd) {
+        int room = _outputEnd - _outputTail;
+        text.getChars(0, room, _outputBuffer, _outputTail);
+        _outputTail += room;
+        _flushBuffer();
+        int offset = room;
+        int len = text.length() - room;
+
+        while (len > _outputEnd) {
+            int amount = _outputEnd;
+            text.getChars(offset, offset+amount, _outputBuffer, 0);
+            _outputTail = amount;
             _flushBuffer();
+            offset += amount;
+            len -= amount;
         }
-        _outputBuffer[_outputTail++] = c;
+        // And last piece (at most length of buffer)
+        text.getChars(offset, offset+len, _outputBuffer, 0);
+        _outputTail = len;
     }
 
-    protected void _writeRawLong(String text) throws IOException
+    protected void _writeRawLong(StringBuilder text) throws IOException
     {
         int room = _outputEnd - _outputTail;
         text.getChars(0, room, _outputBuffer, _outputTail);

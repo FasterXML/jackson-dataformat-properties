@@ -109,7 +109,7 @@ public class JavaPropsSchema
      * also include white before and/or after "equals character".
      * Default value is a single '=' character with no white spaces around
      */
-    protected String _lineKeyValueSeparator = "=";
+    protected String _keyValueSeparator = "=";
     
     /**
      * String added after value, including at least one linefeed.
@@ -124,6 +124,80 @@ public class JavaPropsSchema
      * (leading '#' or '!') and linefeeds MUST be specified by caller.
      */
     protected String _header = "";
+
+    /*
+    /**********************************************************************
+    /* Construction, mutant factories
+    /**********************************************************************
+     */
+
+    public JavaPropsSchema() { }
+
+    public JavaPropsSchema(JavaPropsSchema base) {
+        _firstArrayOffset = base._firstArrayOffset;
+        _pathSeparator = base._pathSeparator;
+        _indexMarker = base._indexMarker;
+        _parseSimpleIndexes = base._parseSimpleIndexes;
+        _writeIndexUsingMarkers = base._writeIndexUsingMarkers;
+        _lineIndentation = base._lineIndentation;
+        _keyValueSeparator = base._keyValueSeparator;
+        _lineEnding = base._lineEnding;
+        _header = base._header;
+    }
+
+    public JavaPropsSchema withFirstArrayOffset(int v) {
+        JavaPropsSchema s = new JavaPropsSchema(this);
+        s._firstArrayOffset = v;
+        return s;
+    }
+        
+    public JavaPropsSchema withPathSeparator(String v) {
+        JavaPropsSchema s = new JavaPropsSchema(this);
+        s._pathSeparator = v;
+        return s;
+    }
+
+    public JavaPropsSchema withIndexMarker(Markers v) {
+        JavaPropsSchema s = new JavaPropsSchema(this);
+        s._indexMarker = v;
+        return s;
+    }
+
+    public JavaPropsSchema withParseSimpleIndexes(boolean v) {
+        JavaPropsSchema s = new JavaPropsSchema(this);
+        s._parseSimpleIndexes = v;
+        return s;
+    }
+
+    public JavaPropsSchema withWriteIndexUsingMarkers(boolean v) {
+        JavaPropsSchema s = new JavaPropsSchema(this);
+        s._writeIndexUsingMarkers= v;
+        return s;
+    }
+
+    public JavaPropsSchema withLineIndentation(String v) {
+        JavaPropsSchema s = new JavaPropsSchema(this);
+        s._lineIndentation = v;
+        return s;
+    }
+
+    public JavaPropsSchema withKeyValueSeparator(String v) {
+        JavaPropsSchema s = new JavaPropsSchema(this);
+        s._keyValueSeparator = v;
+        return s;
+    }
+
+    public JavaPropsSchema withLineEnding(String v) {
+        JavaPropsSchema s = new JavaPropsSchema(this);
+        s._lineEnding = v;
+        return s;
+    }
+
+    public JavaPropsSchema withHeader(String v) {
+        JavaPropsSchema s = new JavaPropsSchema(this);
+        s._header = v;
+        return s;
+    }
 
     /*
     /**********************************************************************
@@ -166,8 +240,8 @@ public class JavaPropsSchema
         return _lineIndentation;
     }
 
-    public String lineKeyValueSeparator() {
-        return _lineKeyValueSeparator;
+    public String keyValueSeparator() {
+        return _keyValueSeparator;
     }
 
     public boolean parseSimpleIndexes() {
