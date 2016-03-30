@@ -57,10 +57,10 @@ public final class Latin1Reader extends Reader
     }
     */
 
-    public Latin1Reader(IOContext ctxt, byte[] buf, int ptr, int len)
+    public Latin1Reader(byte[] buf, int ptr, int len)
     {
         super(new Object());
-        _ioContext = ctxt;
+        _ioContext = null;
         _inputSource = null;
         _inputBuffer = buf;
         _inputPtr = ptr;

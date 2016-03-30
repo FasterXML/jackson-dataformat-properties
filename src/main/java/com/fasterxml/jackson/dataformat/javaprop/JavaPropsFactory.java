@@ -225,7 +225,7 @@ public class JavaPropsFactory extends JsonFactory
     @Override
     protected JsonParser _createParser(byte[] data, int offset, int len, IOContext ctxt) throws IOException
     {
-        return _createParser(new Latin1Reader(ctxt, data, offset, len), ctxt);
+        return _createParser(new Latin1Reader(data, offset, len), ctxt);
     }
 
     /*

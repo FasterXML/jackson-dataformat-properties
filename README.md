@@ -1,7 +1,8 @@
 ## Overview
 
 [Jackson](/FasterXML/jackson) (Java) data format module that supports reading and writing 
-Java Properties files, using naming convention to determine implied structure (by default
+[Java Properties](https://en.wikipedia.org/wiki/.properties) files,
+using naming convention to determine implied structure (by default
 assuming dotted notation, but configurable from non-nested to other separators).
 
 ## Status
