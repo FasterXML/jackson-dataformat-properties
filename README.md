@@ -162,7 +162,9 @@ TO BE WRITTEN
 
 TO BE WRITTEN
 
-# Samples for specific usage
+# Sample Usage
+
+## ZooKeeper Configs
 
 Consider following simple [ZooKeeper](https://zookeeper.apache.org/) config file
 from [ZK Documentation](https://zookeeper.apache.org/doc/r3.1.2/zookeeperStarted.html):
@@ -209,7 +211,8 @@ static class ZKServer {
 }
 ```
 
-and as earlier, reading such Configuration would be as simple as:
+where the only slightly complicated part is splitting of colon-separated endpoint definition.
+As earlier, reading such Configuration would be as simple as:
 
 ```java
 ZKConfig config = propsMapper.readValue(new File("zook.properties"), ZKConfig.class);
