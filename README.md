@@ -154,13 +154,68 @@ note also that when reading, absolute value of index is not used as-is but only 
 ordering of entries: that is, gaps in logical numbering do not indicate `null` values in resulting
 arrays and `List`s.
 
-# Using "Any" properties
+## Using "Any" properties
 
 TO BE WRITTEN
 
-# Customizing handling with `JavaPropsSchema`
+## Customizing handling with `JavaPropsSchema`
 
 TO BE WRITTEN
 
+# Samples for specific usage
+
+Consider following simple [ZooKeeper](https://zookeeper.apache.org/) config file
+from [ZK Documentation](https://zookeeper.apache.org/doc/r3.1.2/zookeeperStarted.html):
+
+```
+tickTime=2000
+dataDir=/var/zookeeper
+clientPort=2181
+initLimit=5
+syncLimit=2
+server.1=zoo1:2888:3888
+server.2=zoo2:2888:3888
+server.3=zoo3:2888:3888
+```
+
+this could be expressed by, say, following Java classes (used by unit tests of this module):
+
+```java
+static class ZKConfig {
+    public int tickTime;
+    public File dataDir;
+    public int clientPort;
+    public int initLimit, syncLimit;
+    @JsonProperty("server")
+    public List<ZKServer> servers;
+}
+
+static class ZKServer {
+  public final int srcPort, dstPort;
+  public final String host;
+
+  @JsonCreator
+  public ZKServer(String combo) { // should validate better; should work for now
+    String[] parts = combo.split(":");
+	host = parts[0];h
+    srcPort = Integer.parseInt(parts[1]);
+    dstPort = Integer.parseInt(parts[2]);
+  }
+
+  @JsonValue
+  public String asString() {
+    return String.format("%s:%d:%d", host, srcPort, dstPort);
+  }
+}
+```
+
+and as earlier, reading such Configuration would be as simple as:
+
+```java
+ZKConfig config = propsMapper.readValue(new File("zook.properties"), ZKConfig.class);
+```
+
+after which access to properties would be done using simple field access (or, if we
+prefer, additional getters).
 
 
