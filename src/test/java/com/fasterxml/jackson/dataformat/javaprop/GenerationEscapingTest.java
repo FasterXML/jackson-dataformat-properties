@@ -40,5 +40,9 @@ System.err.println("-> "+sw);
         input = new HashMap<>();
         input.put("key", "NUL=\0...");
         assertEquals("key=NUL=\\u0000...\n", MAPPER.writeValueAsString(input));
+
+        input = new HashMap<>();
+        input.put("key", "multi\nline");
+        assertEquals("key=multi\\nline\n", MAPPER.writeValueAsString(input));
     }
 }
