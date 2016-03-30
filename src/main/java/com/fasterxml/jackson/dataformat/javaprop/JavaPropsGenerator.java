@@ -30,8 +30,6 @@ public class JavaPropsGenerator extends GeneratorBase
         EMPTY_SCHEMA = JavaPropsSchema.emptySchema();
     }
 
-    protected final int[] sValueEscapes = JPropEscapes.getValueEscapes();
-    
     /*
     /**********************************************************
     /* Configuration
@@ -151,6 +149,15 @@ public class JavaPropsGenerator extends GeneratorBase
     }
     */
 
+    @Override
+    public void setSchema(FormatSchema schema) {
+        if (schema instanceof JavaPropsSchema) {
+            _schema = (JavaPropsSchema) schema;
+            return;
+        }
+        super.setSchema(schema);
+    }
+    
     /*
     /**********************************************************
     /* Overrides: capability introspection methods

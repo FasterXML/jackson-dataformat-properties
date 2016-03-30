@@ -50,8 +50,6 @@ public class JPropEscapes
         sKeyEscapes = table;
     }
 
-    public static int[] getValueEscapes() { return sValueEscapes; }
-
     public static void appendKey(StringBuilder sb, String key) {
         final int end = key.length();
         if (end == 0) {
