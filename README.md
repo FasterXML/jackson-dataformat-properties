@@ -38,3 +38,43 @@ String props = mapper.writeValueAsBytes(value);
 mapper.writeValue(new File("stuff.properties", value);
 SomeType otherValue = mapper.readValue(props, SomeType.class);
 ```
+
+## Simple POJO serialization
+
+Given our simple POJO definition of
+
+```java
+public class User {
+    public Gender gender;
+    public Name name; // nested object
+    public boolean verified;
+    public byte[] userImage;
+}
+static class Name {
+    public String first, last;
+}
+enum Gender { M, F, O; }
+```
+
+and code
+
+```java
+String props = mapper.writeValueAsString(user);
+```
+
+we could have following contents in String `props`:
+
+```
+gender=M
+name.first=Bob
+name.last=Palmer
+verified=true
+userImage=AQIDBA==
+```
+
+and could similarly read it back with:
+
+```java
+User result = mapper.readValue(props, User.class);
+```
+

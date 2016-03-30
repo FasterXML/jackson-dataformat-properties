@@ -572,8 +572,7 @@ public class JavaPropsGenerator extends GeneratorBase
 
     protected void _writeLinefeed() throws IOException
     {
-        _writeRaw('\n');
-        // !!! TODO
+        _writeRaw(_schema.lineEnding());
     }
 
     /*

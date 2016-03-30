@@ -1,7 +1,14 @@
 package com.fasterxml.jackson.dataformat.javaprop;
 
-import com.fasterxml.jackson.core.Version;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JavaPropsMapper extends ObjectMapper
@@ -45,7 +52,35 @@ public class JavaPropsMapper extends ObjectMapper
 
     /*
     /**********************************************************
-    /* Schema access
+    /* Extended read methods
     /**********************************************************
      */
+
+    public <T> T readValue(Properties props, Class<T> valueType)
+        throws IOException
+    {
+        return readValue(getFactory().createParser(props), valueType);
+    }
+
+    public <T> T readValue(Properties props, JavaType valueType)
+        throws IOException
+    {
+        return readValue(getFactory().createParser(props), valueType);
+    }
+
+    /*
+    /**********************************************************
+    /* Extended write methods
+    /**********************************************************
+     */
+
+    // do we have any actually?
+
+    /*
+    /**********************************************************
+    /* Schema support methods?
+    /**********************************************************
+     */
+
+    // do we have any actually?
 }
