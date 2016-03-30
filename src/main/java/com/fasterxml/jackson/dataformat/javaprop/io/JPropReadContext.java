@@ -106,13 +106,15 @@ public abstract class JPropReadContext
      */
     public JPropReadContext nextContext()
     {
-        if (_nextNode == null) {
+        JPropNode n = _nextNode;
+        if (n == null) {
             return _parent;
         }
-        if (_nextNode.isArray()) {
-            return new ArrayContext(this, _nextNode);
+        _nextNode = null;
+        if (n.isArray()) {
+            return new ArrayContext(this, n);
         }
-        return new ObjectContext(this, _nextNode);
+        return new ObjectContext(this, n);
     }
 
     public String getCurrentText() {
@@ -160,11 +162,12 @@ public abstract class JPropReadContext
                     _state = STATE_END;
                     return JsonToken.END_ARRAY;
                 }
-                _nextNode = _contents.next();
-                if (_nextNode.isLeaf()) {
-                    _currentText = _nextNode.getValue();
+                JPropNode n = _contents.next();
+                if (n.isLeaf()) {
+                    _currentText = n.getValue();
                     return JsonToken.VALUE_STRING;
                 }
+                _nextNode = n;
                 // Structured; need to indicate indirectly
                 return null;
                 
@@ -227,10 +230,11 @@ public abstract class JPropReadContext
                 _state = STATE_CONTENT_VALUE;
                 return JsonToken.FIELD_NAME;
             case STATE_CONTENT_VALUE:
+                _state = STATE_CONTENT_KEY;
                 // Simple textual leaf?
                 if (_nextNode.isLeaf()) {
                     _currentText = _nextNode.getValue();
-                    _state = STATE_CONTENT_KEY;
+                    _nextNode = null;
                     return JsonToken.VALUE_STRING;
                 }
                 // Structured; need to indicate indirectly

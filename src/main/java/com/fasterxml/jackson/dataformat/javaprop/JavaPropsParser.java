@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.core.base.ParserMinimalBase;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.util.ByteArrayBuilder;
+
 import com.fasterxml.jackson.dataformat.javaprop.io.JPropReadContext;
 import com.fasterxml.jackson.dataformat.javaprop.util.JPropNode;
 import com.fasterxml.jackson.dataformat.javaprop.util.JPropNodeBuilder;
@@ -18,7 +19,7 @@ import com.fasterxml.jackson.dataformat.javaprop.util.JPropNodeBuilder;
 public class JavaPropsParser extends ParserMinimalBase
 {
     protected final static JavaPropsSchema DEFAULT_SCHEMA = new JavaPropsSchema();
-    
+
     /*
     /**********************************************************
     /* Configuration
@@ -207,6 +208,7 @@ public class JavaPropsParser extends ParserMinimalBase
 
     @Override
     public JsonToken nextToken() throws IOException {
+
         if (_readContext == null) {
             if (_closed) {
                 return null;
@@ -214,6 +216,13 @@ public class JavaPropsParser extends ParserMinimalBase
             _closed = true;
             JPropNode root = JPropNodeBuilder.build(_schema, _sourceProperties);
             _readContext = JPropReadContext.create(root);
+
+            // 30-Mar-2016, tatu: For debugging can be useful:
+            /*
+System.err.println("SOURCE: ("+root.getClass().getName()+") <<\n"+new ObjectMapper().writerWithDefaultPrettyPrinter()
+.writeValueAsString(root.asRaw()));
+System.err.println("\n>>");
+*/
         }
 
         while ((_currToken = _readContext.nextToken()) == null) {

@@ -1,6 +1,9 @@
 package com.fasterxml.jackson.dataformat.javaprop;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
 
@@ -127,6 +130,23 @@ public abstract class ModuleTestBase extends junit.framework.TestCase
         return new ObjectMapper(new JavaPropsFactory());
     }
 
+    /*
+    /**********************************************************
+    /* Helper methods; read helpers
+    /**********************************************************
+     */
+    
+    protected final <T> T _mapFrom(ObjectMapper mapper, String input, Class<T> type,
+            boolean useBytes)
+        throws IOException
+    {
+        if (useBytes) {
+            InputStream in = new ByteArrayInputStream(input.getBytes("ISO-8859-1"));
+            return mapper.readValue(in, type);
+        }
+        return mapper.readValue(new StringReader(input), type);
+    }
+    
     /*
     /**********************************************************
     /* Helper methods; low-level

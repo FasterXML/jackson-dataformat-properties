@@ -1,17 +1,56 @@
 package com.fasterxml.jackson.dataformat.javaprop;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
+import java.io.File;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.javaprop.ModuleTestBase.Points;
 
 public class ArrayParsingTest extends ModuleTestBase
 {
     private final ObjectMapper MAPPER = mapperForProps();
 
+    static class ZKConfig {
+        public int tickTime;
+        public File dataDir;
+        public int clientPort;
+        public int initLimit, syncLimit;
+        @JsonProperty("server")
+        public List<ZKServer> servers;
+    }
+
+    static class ZKServer {
+        public final int srcPort, dstPort;
+        public final String host;
+
+        @JsonCreator
+        public ZKServer(String combo) {
+            // should validate better; should work for now
+            String[] parts = combo.split(":");
+            try {
+                host = parts[0];
+                srcPort = Integer.parseInt(parts[1]);
+                dstPort = Integer.parseInt(parts[2]);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid input String for ZKServer-valued property: \""
+                        +combo+"\"");
+            }
+        }
+
+        @JsonValue
+        public String asString() {
+            return String.format("%s:%d:%d", host, srcPort, dstPort);
+        }
+    }
+
+    /*
+    /**********************************************************************
+    /* Test methods
+    /**********************************************************************
+     */
+    
     public void testPointList() throws Exception
     {
         _testPointList(false);
@@ -40,14 +79,30 @@ public class ArrayParsingTest extends ModuleTestBase
         assertEquals(6, result.p.get(2).y);
     }
 
-    protected <T> T _mapFrom(ObjectMapper mapper, String input, Class<T> type,
-            boolean useBytes)
-        throws IOException
+    public void testZKPojo() throws Exception
     {
-        if (useBytes) {
-            InputStream in = new ByteArrayInputStream(input.getBytes("ISO-8859-1"));
-            return mapper.readValue(in, type);
-        }
-        return mapper.readValue(new StringReader(input), type);
+        _testZKPojo(false);
+        _testZKPojo(true);
+    }
+    
+    public void _testZKPojo(boolean useBytes) throws Exception
+    {
+        final String INPUT
+="tickTime=2000\n"
++"dataDir=/var/zookeeper\n"
++"clientPort=2181\n"
++"initLimit=5\n"
++"syncLimit=2\n"
++"server.1=zoo1:2888:2889\n"
++"server.2=zoo2:3888:3889\n"
++"server.3=zoo3:4888:4889\n"
+    ;
+        
+        ZKConfig config = _mapFrom(MAPPER, INPUT, ZKConfig.class, useBytes);
+        assertNotNull(config.servers);
+        assertEquals(3, config.servers.size());
+        assertEquals(4889, config.servers.get(2).dstPort);
+        assertEquals(2, config.syncLimit);
+        assertEquals(2181, config.clientPort);
     }
 }

@@ -90,6 +90,7 @@ public class JPropNode
     }
 
     public Iterator<JPropNode> arrayContents() {
+        // should never be called if `_byIndex` is null, hence no checks
         return _byIndex.values().iterator();
     }
 
@@ -97,6 +98,37 @@ public class JPropNode
      * Child entries accessed with String property name, if any.
      */
     public Iterator<Map.Entry<String, JPropNode>> objectContents() {
+        if (_byName == null) { // only value, most likely
+            return Collections.emptyIterator();
+        }
         return _byName.entrySet().iterator();
+    }
+
+    /**
+     * Helper method, mostly for debugging/testing, to convert structure contained
+     * into simple List/Map/String equivalent.
+     */
+    public Object asRaw() {
+        if (isArray()) {
+            List<Object> result = new ArrayList<>();
+            if (_value != null) {
+                result.add(_value);
+            }
+            for (JPropNode v : _byIndex.values()) {
+                result.add(v.asRaw());
+            }
+            return result;
+        }
+        if (_byName != null) {
+            Map<String,Object> result = new LinkedHashMap<>();
+            if (_value != null) {
+                result.put("", _value);
+            }
+            for (Map.Entry<String, JPropNode> entry : _byName.entrySet()) {
+                result.put(entry.getKey(), entry.getValue().asRaw());
+            }
+            return result;
+        }
+        return _value;
     }
 }

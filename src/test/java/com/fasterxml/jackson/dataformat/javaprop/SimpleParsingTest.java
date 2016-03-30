@@ -1,7 +1,5 @@
 package com.fasterxml.jackson.dataformat.javaprop;
 
-import java.io.*;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class SimpleParsingTest extends ModuleTestBase
@@ -41,14 +39,4 @@ public class SimpleParsingTest extends ModuleTestBase
         assertEquals(10, result.bottomRight.y);
     }
 
-    protected <T> T _mapFrom(ObjectMapper mapper, String input, Class<T> type,
-            boolean useBytes)
-        throws IOException
-    {
-        if (useBytes) {
-            InputStream in = new ByteArrayInputStream(input.getBytes("ISO-8859-1"));
-            return mapper.readValue(in, type);
-        }
-        return mapper.readValue(new StringReader(input), type);
-    }
 }

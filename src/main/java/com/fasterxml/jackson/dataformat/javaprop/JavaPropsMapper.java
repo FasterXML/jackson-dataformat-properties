@@ -1,14 +1,10 @@
 package com.fasterxml.jackson.dataformat.javaprop;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Properties;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JavaPropsMapper extends ObjectMapper
