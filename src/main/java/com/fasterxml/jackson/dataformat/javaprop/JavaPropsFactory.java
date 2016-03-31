@@ -89,7 +89,7 @@ public class JavaPropsFactory extends JsonFactory
     // Can not handle raw binary data
     @Override
     public boolean canHandleBinaryNatively() {
-        return true;
+        return false;
     }
 
     // Not using char[] internally

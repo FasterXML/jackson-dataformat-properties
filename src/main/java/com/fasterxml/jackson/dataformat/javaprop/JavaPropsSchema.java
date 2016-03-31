@@ -13,7 +13,7 @@ public class JavaPropsSchema
 {
     private static final long serialVersionUID = 1L; // 2.5
 
-    protected final static Markers DEFAULT_INDEX_MARKER = new Markers("[", "]");
+    protected final static Markers DEFAULT_INDEX_MARKER = Markers.create("[", "]");
 
     protected final static JavaPropsSchema EMPTY = new JavaPropsSchema();
     
@@ -146,54 +146,114 @@ public class JavaPropsSchema
     }
 
     public JavaPropsSchema withFirstArrayOffset(int v) {
+        if (v == _firstArrayOffset) {
+            return this;
+        }
         JavaPropsSchema s = new JavaPropsSchema(this);
         s._firstArrayOffset = v;
         return s;
     }
-        
+
+    /**
+     * Mutant factory method for constructing a new instance with
+     * specified path separator; default being comma (".").
+     * Note that setting separator to `null` or empty String will
+     * basically disable handling of nesting, similar to
+     * calling {@link #withoutPathSeparator}.
+     */
     public JavaPropsSchema withPathSeparator(String v) {
+        if (v == null) {
+            v = "";
+        }
+        if (_equals(v, _pathSeparator)) {
+            return this;
+        }
         JavaPropsSchema s = new JavaPropsSchema(this);
         s._pathSeparator = v;
         return s;
     }
 
+    /**
+     * Mutant factory method for constructing a new instance that
+     * specifies that no "path splitting" is to be done: this is
+     * similar to default behavior of {@link java.util.Properties}
+     * in which keys are full Strings and there is no nesting of values.
+     */
+    public JavaPropsSchema withoutPathSeparator() {
+        if ("".equals(_pathSeparator)) {
+            return this;
+        }
+        JavaPropsSchema s = new JavaPropsSchema(this);
+        s._pathSeparator = "";
+        return s;
+    }
+    
     public JavaPropsSchema withIndexMarker(Markers v) {
+        if (_equals(v, _indexMarker)) {
+            return this;
+        }
         JavaPropsSchema s = new JavaPropsSchema(this);
         s._indexMarker = v;
         return s;
     }
 
     public JavaPropsSchema withParseSimpleIndexes(boolean v) {
+        if (v == _parseSimpleIndexes) {
+            return this;
+        }
         JavaPropsSchema s = new JavaPropsSchema(this);
         s._parseSimpleIndexes = v;
         return s;
     }
 
     public JavaPropsSchema withWriteIndexUsingMarkers(boolean v) {
+        if (v == _writeIndexUsingMarkers) {
+            return this;
+        }
         JavaPropsSchema s = new JavaPropsSchema(this);
-        s._writeIndexUsingMarkers= v;
+        s._writeIndexUsingMarkers = v;
         return s;
     }
 
     public JavaPropsSchema withLineIndentation(String v) {
+        if (_equals(v, _lineIndentation)) {
+            return this;
+        }
         JavaPropsSchema s = new JavaPropsSchema(this);
         s._lineIndentation = v;
         return s;
     }
 
     public JavaPropsSchema withKeyValueSeparator(String v) {
+        if (_equals(v, _keyValueSeparator)) {
+            return this;
+        }
         JavaPropsSchema s = new JavaPropsSchema(this);
         s._keyValueSeparator = v;
         return s;
     }
 
     public JavaPropsSchema withLineEnding(String v) {
+        if (_equals(v, _lineEnding)) {
+            return this;
+        }
         JavaPropsSchema s = new JavaPropsSchema(this);
         s._lineEnding = v;
         return s;
     }
 
+    /**
+     * Mutant factory for constructing schema instance where specified
+     * header section (piece of text written out right before actual
+     * properties entries) will be used.
+     * Note that caller must specify any and all linefeeds to use: generator
+     * will NOT modify header String contents in any way, and will not append
+     * a linefeed after contents (if any).
+     */
     public JavaPropsSchema withHeader(String v) {
+        if (_equals(v, _header)) {
+            return this;
+        }
         JavaPropsSchema s = new JavaPropsSchema(this);
         s._header = v;
         return s;
@@ -247,12 +307,19 @@ public class JavaPropsSchema
     public boolean parseSimpleIndexes() {
         return _parseSimpleIndexes;
     }
-    
+
     public String pathSeparator() {
         return _pathSeparator;
     }
 
     public boolean writeIndexUsingMarkers() {
         return _writeIndexUsingMarkers && (_indexMarker != null);
+    }
+
+    private <V> boolean _equals(V a, V b) {
+        if (a == null) {
+            return (b == null);
+        }
+        return (b != null) && a.equals(b);
     }
 }

@@ -1,11 +1,15 @@
 package com.fasterxml.jackson.dataformat.javaprop;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class SimpleParsingTest extends ModuleTestBase
 {
     private final ObjectMapper MAPPER = mapperForProps();
 
+    private final ObjectMapper JSON_MAPPER = new ObjectMapper();
+    
     public void testSimpleNonNested() throws Exception {
         _testSimpleNonNested(false);
         _testSimpleNonNested(true);
@@ -39,4 +43,12 @@ public class SimpleParsingTest extends ModuleTestBase
         assertEquals(10, result.bottomRight.y);
     }
 
+    public void testNonSplittingParsing() throws Exception {
+        JavaPropsSchema schema = JavaPropsSchema.emptySchema()
+                .withoutPathSeparator();
+        Map<?,?> result = MAPPER.readerFor(Map.class)
+                .with(schema)
+                .readValue("a.b.c = 3");
+        assertEquals("{\"a.b.c\":\"3\"}", JSON_MAPPER.writeValueAsString(result));
+    }
 }

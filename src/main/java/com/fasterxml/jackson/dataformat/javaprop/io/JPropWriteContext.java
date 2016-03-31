@@ -75,6 +75,10 @@ public class JPropWriteContext
         return new JPropWriteContext(TYPE_ROOT, null, 0);
     }
 
+    public static JPropWriteContext createRootContext(int basePathLength) {
+        return new JPropWriteContext(TYPE_ROOT, null, basePathLength);
+    }
+    
     public JPropWriteContext createChildArrayContext(int basePathLength) {
         JPropWriteContext ctxt = _child;
         if (ctxt == null) {

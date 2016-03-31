@@ -29,4 +29,34 @@ public class SimpleGenerationTest extends ModuleTestBase
                 +"bottomRight.y=10\n"
                 ,props);
     }
+
+    public void testRectangleWithHeader() throws Exception
+    {
+        final String HEADER = "# SUPER IMPORTANT!\n";
+        JavaPropsSchema schema = JavaPropsSchema.emptySchema()
+                .withHeader(HEADER);
+        String props = MAPPER.writer(schema)
+                .writeValueAsString(
+                new Rectangle(new Point(1, -2), new Point(5, 10)));
+        assertEquals(HEADER
+                +"topLeft.x=1\n"
+                +"topLeft.y=-2\n"
+                +"bottomRight.x=5\n"
+                +"bottomRight.y=10\n"
+                ,props);
+    }
+
+    public void testRectangleWithIndent() throws Exception
+    {
+        JavaPropsSchema schema = JavaPropsSchema.emptySchema()
+                .withLineIndentation("  ");
+        String props = MAPPER.writer(schema)
+                .writeValueAsString(
+                new Rectangle(new Point(1, -2), new Point(5, 10)));
+        assertEquals("  topLeft.x=1\n"
+                +"  topLeft.y=-2\n"
+                +"  bottomRight.x=5\n"
+                +"  bottomRight.y=10\n"
+                ,props);
+    }
 }
