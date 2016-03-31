@@ -29,4 +29,17 @@ public class SimpleGenerationTest extends ModuleTestBase
                 +"bottomRight.y=10\n"
                 ,props);
     }
+
+    public void testRectangleWithCustomKeyValueSeparator() throws Exception
+    {
+        JavaPropsSchema schema = JavaPropsSchema.emptySchema()
+                .withKeyValueSeparator(": ");
+        String props = MAPPER.writer(schema).writeValueAsString(
+                new Rectangle(new Point(1, -2), new Point(5, 10)));
+        assertEquals("topLeft.x: 1\n"
+                +"topLeft.y: -2\n"
+                +"bottomRight.x: 5\n"
+                +"bottomRight.y: 10\n"
+                ,props);
+    }
 }
