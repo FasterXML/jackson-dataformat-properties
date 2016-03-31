@@ -10,8 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ArrayParsingTest extends ModuleTestBase
 {
-    private final ObjectMapper MAPPER = mapperForProps();
-
     static class ZKConfig {
         public int tickTime;
         public File dataDir;
@@ -45,12 +43,34 @@ public class ArrayParsingTest extends ModuleTestBase
         }
     }
 
+    static class StringArrayWrapper {
+        public String[] str;
+    }
+
+    private final ObjectMapper MAPPER = mapperForProps();
+    
     /*
     /**********************************************************************
     /* Test methods
     /**********************************************************************
      */
-    
+
+    public void testArrayWithBranch() throws Exception
+    {
+        // basically "extra" branch should become as first element, and
+        // after that ordering by numeric value
+        final String INPUT = "str=first\n"
+                +"str.11=third\n"
+                +"str.2=second\n"
+                ;
+        StringArrayWrapper w = MAPPER.readValue(INPUT, StringArrayWrapper.class);
+        assertNotNull(w.str);
+        assertEquals(3, w.str.length);
+        assertEquals("first", w.str[0]);
+        assertEquals("second", w.str[1]);
+        assertEquals("third", w.str[2]);
+    }
+
     public void testPointList() throws Exception
     {
         _testPointList(false);

@@ -163,8 +163,6 @@ public class JPropWriteContext
         _currentValue = v;
     }
 
-    public boolean notArray() { return _type != TYPE_ARRAY; }
-    
     public StringBuilder appendDesc(StringBuilder sb) {
         if (_parent != null) {
             sb = _parent.appendDesc(sb);

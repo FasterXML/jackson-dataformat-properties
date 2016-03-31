@@ -1,36 +1,23 @@
-package com.fasterxml.jackson.dataformat.javaprop;
+package com.fasterxml.jackson.dataformat.javaprop.failing;
 
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.JsonStreamContext;
 import com.fasterxml.jackson.core.io.SerializedString;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.fasterxml.jackson.dataformat.javaprop.JavaPropsFactory;
+import com.fasterxml.jackson.dataformat.javaprop.ModuleTestBase;
 
 public class SimpleStreamingTest extends ModuleTestBase
 {
     private final ObjectMapper MAPPER = mapperForProps();
 
     private final JavaPropsFactory F = new JavaPropsFactory();
-
-    public void testParsing() throws Exception
-    {
-        JsonParser p = F.createParser("foo = bar");
-        Object src = p.getInputSource();
-        assertTrue(src instanceof Reader);
-        assertToken(JsonToken.START_OBJECT, p.nextToken());
-        assertNull(p.getEmbeddedObject());
-        assertNotNull(p.getCurrentLocation()); // N/A
-        assertNotNull(p.getTokenLocation()); // N/A
-        p.close();
-        assertTrue(p.isClosed());
-    }
 
     public void testStreamingGeneration() throws Exception
     {
@@ -49,15 +36,18 @@ public class SimpleStreamingTest extends ModuleTestBase
         gen.writeNumberField("double", 0.25);
         gen.writeNumberField("float", 0.5f);
         gen.writeNumberField("decimal", BigDecimal.valueOf(0.125));
-        gen.writeFieldName(new SerializedString("bigInt"));
-        gen.writeNumber(BigInteger.valueOf(123));
-        gen.writeFieldName("numString");
-        gen.writeNumber("123.0");
-        gen.writeFieldName("charString");
-        gen.writeString(new char[] { 'a', 'b', 'c' }, 1, 2);
 
         gen.writeFieldName("arr");
         gen.writeStartArray();
+        
+        JsonStreamContext ctxt = gen.getOutputContext();
+        String path = ctxt.toString();
+
+        // 30-Mar-2016, tatu: Will fail until we can override accessor in 2.8
+        //   (Was final in 2.7 and before)
+//        assertTrue(ctxt instanceof JPropWriteContext);
+
+        assertEquals("/arr", path);
         
         gen.writeEndArray();
 

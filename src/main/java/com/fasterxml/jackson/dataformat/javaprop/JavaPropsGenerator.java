@@ -24,7 +24,7 @@ public class JavaPropsGenerator extends GeneratorBase
      * to do something like use a placeholder...
      */
     protected final static JsonWriteContext BOGUS_WRITE_CONTEXT = JsonWriteContext.createRootContext(null);
-    
+
     private final static JavaPropsSchema EMPTY_SCHEMA;
     static {
         EMPTY_SCHEMA = JavaPropsSchema.emptySchema();
@@ -245,6 +245,14 @@ public class JavaPropsGenerator extends GeneratorBase
             }
         }
     }
+
+    // !!! TODO: Implement in 2.8 -- once 'final' removed
+    /*
+    @Override
+    public JsonWriteContext getOutputContext() {
+        return _jpropContext;
+    }
+    */
 
     /*
     /**********************************************************************
