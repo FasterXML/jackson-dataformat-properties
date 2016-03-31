@@ -61,8 +61,6 @@ public class SimpleStreamingTest extends ModuleTestBase
         
         gen.writeEndArray();
 
-        gen.writeRaw("# comment!");
-        gen.writeRaw(new SerializedString("# comment!"));
         gen.writeEndObject();
         assertFalse(gen.isClosed());
         gen.flush();
@@ -72,6 +70,50 @@ public class SimpleStreamingTest extends ModuleTestBase
 
         // Plus read back for fun
         Map<?,?> stuff = MAPPER.readValue(props, Map.class);
+        assertEquals(11, stuff.size());
         assertEquals("10", stuff.get("long"));
     }
+
+    public void testStreamingGenerationRaw() throws Exception
+    {
+        StringWriter strw = new StringWriter();
+        JsonGenerator gen = F.createGenerator(strw);
+
+        String COMMENT = "# comment!\n";
+        gen.writeRaw(COMMENT);
+        gen.writeRaw(new SerializedString(COMMENT));
+        gen.writeRaw(COMMENT, 0, COMMENT.length());
+        gen.writeRaw('#');
+        gen.writeRaw('\n');
+
+        gen.writeStartObject();
+        gen.writeBooleanField("enabled", true);
+        gen.writeEndObject();
+        
+        gen.close();
+
+        assertEquals(COMMENT + COMMENT + COMMENT
+                + "#\nenabled=true\n", strw.toString());
+
+        // Plus read back for fun
+        Map<?,?> stuff = MAPPER.readValue(strw.toString(), Map.class);
+        assertEquals(1, stuff.size());
+        assertEquals("true", stuff.get("enabled"));
+    }        
+
+    public void testStreamingLongRaw() throws Exception
+    {
+        StringWriter strw = new StringWriter();
+        JsonGenerator gen = F.createGenerator(strw);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("# ");
+        for (int i = 0; i < 12000; ++i) {
+            sb.append('a');
+        }
+        gen.writeRaw(sb.toString());
+        gen.close();
+
+        assertEquals(sb.toString(), strw.toString());
+    }        
 }

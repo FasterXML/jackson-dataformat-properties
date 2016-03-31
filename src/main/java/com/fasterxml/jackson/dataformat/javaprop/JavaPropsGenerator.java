@@ -623,7 +623,7 @@ public class JavaPropsGenerator extends GeneratorBase
         _outputBuffer[_outputTail++] = c;
     }
     
-    public void _writeRaw(String text) throws IOException
+    protected void _writeRaw(String text) throws IOException
     {
         // Nothing to check, can just output as is
         int len = text.length();
@@ -642,7 +642,7 @@ public class JavaPropsGenerator extends GeneratorBase
         }
     }
 
-    public void _writeRaw(StringBuilder text) throws IOException
+    protected void _writeRaw(StringBuilder text) throws IOException
     {
         // Nothing to check, can just output as is
         int len = text.length();
@@ -658,24 +658,6 @@ public class JavaPropsGenerator extends GeneratorBase
             _outputTail += len;
         } else {
             _writeRawLong(text);
-        }
-    }
-    
-    public void _writeRaw(String text, int start, int len) throws IOException
-    {
-        // Nothing to check, can just output as is
-        int room = _outputEnd - _outputTail;
-
-        if (room < len) {
-            _flushBuffer();
-            room = _outputEnd - _outputTail;
-        }
-        // But would it nicely fit in? If yes, it's easy
-        if (room >= len) {
-            text.getChars(start, start+len, _outputBuffer, _outputTail);
-            _outputTail += len;
-        } else {                
-            _writeRawLong(text.substring(start, start+len));
         }
     }
 
