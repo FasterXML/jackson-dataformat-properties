@@ -119,6 +119,29 @@ public class ArrayParsingTest extends ModuleTestBase
         assertEquals(6, result.p.get(2).y);
     }
 
+    public void testPointListWithIndex() throws Exception
+    {
+        _testPointListWithIndex(false);
+        _testPointListWithIndex(true);
+    }
+    
+    private void _testPointListWithIndex(boolean useBytes) throws Exception
+    {
+        final String INPUT = "p[1].x=1\n"
+                +"p[1].y=2\n"
+                +"p[2].y=4\n"
+                +"p[2].x=3\n"
+                ;
+        Points result = _mapFrom(MAPPER, INPUT, Points.class, useBytes);
+        assertNotNull(result);
+        assertNotNull(result.p);
+        assertEquals(3, result.p.size());
+        assertEquals(1, result.p.get(0).x);
+        assertEquals(2, result.p.get(0).y);
+        assertEquals(3, result.p.get(1).x);
+        assertEquals(4, result.p.get(1).y);
+    }
+
     public void testZKPojo() throws Exception
     {
         _testZKPojo(false);
