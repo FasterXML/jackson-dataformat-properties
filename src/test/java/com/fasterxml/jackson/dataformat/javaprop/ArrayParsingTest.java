@@ -2,6 +2,7 @@ package com.fasterxml.jackson.dataformat.javaprop;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -69,6 +70,25 @@ public class ArrayParsingTest extends ModuleTestBase
         assertEquals("first", w.str[0]);
         assertEquals("second", w.str[1]);
         assertEquals("third", w.str[2]);
+
+        // Also should work if bound to a Map
+        Map<?,?> map = MAPPER.readerFor(Map.class)
+                .readValue(INPUT);
+        assertEquals(1, map.size());
+        Object ob = map.get("str");
+        assertNotNull(ob);
+        assertTrue(ob instanceof List<?>);
+
+        // but let's see how things work with auto-detection disabled:
+        JavaPropsSchema schema = JavaPropsSchema.emptySchema()
+                .withParseSimpleIndexes(false);
+        map = MAPPER.readerFor(Map.class)
+                .with(schema)
+                .readValue(INPUT);
+        assertEquals(1, map.size());
+        ob = map.get("str");
+        assertNotNull(ob);
+        assertTrue(ob instanceof Map);
     }
 
     public void testPointList() throws Exception

@@ -103,19 +103,23 @@ public class JavaPropsParser extends ParserMinimalBase
     public JavaPropsSchema getSchema() {
         return _schema;
     }
-    
+
+    // we do not take byte-based input, so base impl would be fine
+    /*
     @Override
     public int releaseBuffered(OutputStream out) throws IOException {
-        // we do not take byte-based input, so base impl would be fine
         return -1;
     }
+    */
 
+    // current implementation delegates to JDK `Properties, so we don't ever
+    // see the input so:
+    /*
     @Override
     public int releaseBuffered(Writer w) throws IOException {
-        // current implementation delegates to JDK `Properties, so we don't ever
-        // see the input so:
         return -1;
     }
+    */
 
     @Override
     public void close() throws IOException {
