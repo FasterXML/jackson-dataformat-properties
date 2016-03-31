@@ -17,11 +17,8 @@ public abstract class JPropPathSplitter
     
     public static JPropPathSplitter create(JavaPropsSchema schema)
     {
+        // will never be null
         String sep = schema.pathSeparator();
-        if (sep == null) {
-            sep = "";
-        }
-        
         final Markers indexMarker = schema.indexMarker();
 
         // First: index marker in use?
@@ -33,19 +30,17 @@ public abstract class JPropPathSplitter
             // otherwise it's still quite simple
             return new PathOnlySplitter(sep, schema.parseSimpleIndexes());
         }
-        /*
         // Yes, got index marker to use. But how about separator?
         if (sep.isEmpty()) { // no separator, just index. Unusual...
-            
+            return NonSplitting.instance;
         } else { // both separator and index
-            
+            return new PathOnlySplitter(sep, schema.parseSimpleIndexes());
         }
 
-        // !!! TBI
-        throw new IllegalStateException("Handling of Indexes not yet supported");
-        */
+//        // !!! TBI
+//        throw new IllegalStateException("Handling of Indexes not yet supported");
 
-        return new PathOnlySplitter(sep, schema.parseSimpleIndexes());
+//        return new PathOnlySplitter(sep, schema.parseSimpleIndexes());
     }
 
     /**

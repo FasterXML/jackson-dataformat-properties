@@ -75,6 +75,10 @@ public class JPropWriteContext
         return new JPropWriteContext(TYPE_ROOT, null, 0);
     }
 
+    public static JPropWriteContext createRootContext(int basePathLength) {
+        return new JPropWriteContext(TYPE_ROOT, null, basePathLength);
+    }
+    
     public JPropWriteContext createChildArrayContext(int basePathLength) {
         JPropWriteContext ctxt = _child;
         if (ctxt == null) {
@@ -159,8 +163,6 @@ public class JPropWriteContext
         _currentValue = v;
     }
 
-    public boolean notArray() { return _type != TYPE_ARRAY; }
-    
     public StringBuilder appendDesc(StringBuilder sb) {
         if (_parent != null) {
             sb = _parent.appendDesc(sb);

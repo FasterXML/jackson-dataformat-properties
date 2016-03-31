@@ -24,7 +24,7 @@ public class JavaPropsGenerator extends GeneratorBase
      * to do something like use a placeholder...
      */
     protected final static JsonWriteContext BOGUS_WRITE_CONTEXT = JsonWriteContext.createRootContext(null);
-    
+
     private final static JavaPropsSchema EMPTY_SCHEMA;
     static {
         EMPTY_SCHEMA = JavaPropsSchema.emptySchema();
@@ -85,6 +85,10 @@ public class JavaPropsGenerator extends GeneratorBase
 
     protected final StringBuilder _basePath = new StringBuilder(50);
 
+    protected boolean _headerChecked;
+
+    protected int _indentLength;
+    
     /*
     /**********************************************************
     /* Life-cycle
@@ -153,10 +157,23 @@ public class JavaPropsGenerator extends GeneratorBase
     public void setSchema(FormatSchema schema) {
         if (schema instanceof JavaPropsSchema) {
             _schema = (JavaPropsSchema) schema;
+            // Indentation to use?
+            if (_jpropContext.inRoot()) {
+                String indent = _schema.lineIndentation();
+                _indentLength = (indent == null) ? 0 : indent.length();
+                if (_indentLength > 0) {
+                    _basePath.setLength(0);
+                    _basePath.append(indent);
+                    _jpropContext = JPropWriteContext.createRootContext(_indentLength);
+                }
+            }
             return;
         }
         super.setSchema(schema);
     }
+
+    @Override
+    public FormatSchema getSchema() { return _schema; }
     
     /*
     /**********************************************************
@@ -229,6 +246,14 @@ public class JavaPropsGenerator extends GeneratorBase
         }
     }
 
+    // !!! TODO: Implement in 2.8 -- once 'final' removed
+    /*
+    @Override
+    public JsonWriteContext getOutputContext() {
+        return _jpropContext;
+    }
+    */
+
     /*
     /**********************************************************************
     /* Overridden methods; writing field names
@@ -241,10 +266,19 @@ public class JavaPropsGenerator extends GeneratorBase
         if (!_jpropContext.writeFieldName(name)) {
             _reportError("Can not write a field name, expecting a value");
         }
+        // also, may need to output header if this would be first write
+        if (!_headerChecked) {
+            _headerChecked = true;
+            String header = _schema.header();
+            if (header != null && !header.isEmpty()) {
+                _writeRaw(header);
+            }
+        }
+
         // Ok; append to base path at this point.
         // First: ensure possibly preceding field name is removed:
         _jpropContext.truncatePath(_basePath);
-        if (_basePath.length() > 0) {
+        if (_basePath.length() > _indentLength) {
             String sep = _schema.pathSeparator();
             if (!sep.isEmpty()) {
                 _basePath.append(sep);
