@@ -17,7 +17,7 @@ public abstract class JPropPathSplitter
     protected JPropPathSplitter(boolean useSimpleIndex) {
         _useSimpleIndex = useSimpleIndex;
     }
-    
+
     public static JPropPathSplitter create(JavaPropsSchema schema)
     {
         // will never be null
@@ -27,21 +27,28 @@ public abstract class JPropPathSplitter
         // First: index marker in use?
         if (indexMarker == null) { // nope, only path separator, if anything
             // and if no separator, can use bogus "splitter":
-            if (sep.isEmpty()) {
-                return NonSplitting.instance;
-            }
-            // otherwise it's still quite simple
-            if (sep.length() == 1) {
-                return new CharPathOnlySplitter(sep.charAt(0), schema.parseSimpleIndexes());
-            }
-            return new StringPathOnlySplitter(sep, schema.parseSimpleIndexes());
+            return pathOnlySplitter(schema);
         }
         // Yes, got index marker to use. But separator?
         if (sep.isEmpty()) {
             return new IndexOnlySplitter(schema.parseSimpleIndexes(), indexMarker);
         }
-        return new IndexSplitter(sep, schema.parseSimpleIndexes(),
-                indexMarker);
+        return new FullSplitter(sep, schema.parseSimpleIndexes(),
+                indexMarker,
+                pathOnlySplitter(schema));
+    }
+
+    private static JPropPathSplitter pathOnlySplitter(JavaPropsSchema schema)
+    {
+        String sep = schema.pathSeparator();
+        if (sep.isEmpty()) {
+            return NonSplitting.instance;
+        }
+        // otherwise it's still quite simple
+        if (sep.length() == 1) {
+            return new CharPathOnlySplitter(sep.charAt(0), schema.parseSimpleIndexes());
+        }
+        return new StringPathOnlySplitter(sep, schema.parseSimpleIndexes());
     }
 
     /**
@@ -83,28 +90,23 @@ public abstract class JPropPathSplitter
 
     protected int _asInt(String segment) {
         final int len = segment.length();
-        if (len > 0) {
-            for (int i = 0; i < len; ++i) {
-                char c = segment.charAt(i);
-                if ((c > '9') || (c < '0')) {
-                    return -1;
-                }
-            }
-            // Fine; is simple int indeed (possibly with leading zeroes)
-            if (len <= 9) {
-                return Integer.parseInt(segment);
-            }
-            if (len == 10) {
-                long l = Long.parseLong(segment);
-                if (l <= Integer.MAX_VALUE) {
-                    return (int) l;
-                }
-            }
-            // Out of bound, return as String (or, throw exception?)
+        // do not allow ridiculously long numbers as indexes
+        if ((len == 0) || (len > 9)) {
+            return -1;
         }
-        return -1;
+        char c = segment.charAt(0);
+        if ((c > '9') || (c < '0')) {
+            return -1;
+        }
+        for (int i = 0; i < len; ++i) {
+            c = segment.charAt(i);
+            if ((c > '9') || (c < '0')) {
+                return -1;
+            }
+        }
+        return Integer.parseInt(segment);
     }
-    
+
     /*
     /**********************************************************************
     /* Implementations
@@ -249,20 +251,25 @@ public abstract class JPropPathSplitter
         }
     }
 
-    public static class IndexSplitter extends JPropPathSplitter
+    /**
+     * Instance that supports both path separator and index markers
+     * (and possibly also "simple" indexes)
+     */
+    public static class FullSplitter extends JPropPathSplitter
     {
         protected final Pattern _indexMatch;
 
-        // small but important optimization to 
+        // small but important optimization for cases where index markers are absent
         protected final int _indexFirstChar;
-//        protected final 
+        protected final JPropPathSplitter _simpleSplitter;
         
-        public IndexSplitter(String pathSeparator, boolean useSimpleIndex,
-                Markers indexMarker)
+        public FullSplitter(String pathSeparator, boolean useSimpleIndex,
+                Markers indexMarker, JPropPathSplitter fallbackSplitter)
         {
             super(useSimpleIndex);
             String startMarker = indexMarker.getStart();
             _indexFirstChar = startMarker.charAt(0);
+            _simpleSplitter = fallbackSplitter;
             _indexMatch = Pattern.compile(String.format
                     ("(%s)|(%s(\\d{1,9})%s)",
                             Pattern.quote(pathSeparator),
@@ -274,6 +281,9 @@ public abstract class JPropPathSplitter
         public JPropNode splitAndAdd(JPropNode parent,
                 String key, String value)
         {
+            if (key.indexOf(_indexFirstChar) < 0) { // no index start marker
+                return _simpleSplitter.splitAndAdd(parent, key, value);
+            }
             Matcher m = _indexMatch.matcher(key);
             int start = 0;
 

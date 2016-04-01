@@ -142,6 +142,7 @@ public class ArrayParsingTest extends ModuleTestBase
                 +"p[2].y=4\n"
                 +"p[2].x=3\n"
                 ;
+
         Points result = _mapFrom(MAPPER, INPUT, Points.class, useBytes);
         assertNotNull(result);
         assertNotNull(result.p);
@@ -154,11 +155,13 @@ public class ArrayParsingTest extends ModuleTestBase
 
     public void testZKPojo() throws Exception
     {
-        _testZKPojo(false);
-        _testZKPojo(true);
+        _testZKPojo(false, false);
+        _testZKPojo(true, false);
+        _testZKPojo(false, true);
+        _testZKPojo(true, true);
     }
     
-    public void _testZKPojo(boolean useBytes) throws Exception
+    public void _testZKPojo(boolean useBytes, boolean allowIndex) throws Exception
     {
         final String INPUT
 ="tickTime=2000\n"
@@ -170,8 +173,16 @@ public class ArrayParsingTest extends ModuleTestBase
 +"server.2=zoo2:3888:3889\n"
 +"server.3=zoo3:4888:4889\n"
     ;
+
+        JavaPropsSchema schema = JavaPropsSchema.emptySchema();
+        if (allowIndex) { // default schema marker is fine
+            ;
+        } else {
+            schema = schema.withoutIndexMarker();
+        }
+        ObjectReader r = MAPPER.reader(schema);
         
-        ZKConfig config = _mapFrom(MAPPER, INPUT, ZKConfig.class, useBytes);
+        ZKConfig config = _mapFrom(r, INPUT, ZKConfig.class, useBytes);
         assertNotNull(config.servers);
         assertEquals(3, config.servers.size());
         assertEquals(4889, config.servers.get(2).dstPort);
