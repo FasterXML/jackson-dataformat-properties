@@ -135,7 +135,7 @@ public class ArrayParsingTest extends ModuleTestBase
         Points result = _mapFrom(MAPPER, INPUT, Points.class, useBytes);
         assertNotNull(result);
         assertNotNull(result.p);
-        assertEquals(3, result.p.size());
+        assertEquals(2, result.p.size());
         assertEquals(1, result.p.get(0).x);
         assertEquals(2, result.p.get(0).y);
         assertEquals(3, result.p.get(1).x);

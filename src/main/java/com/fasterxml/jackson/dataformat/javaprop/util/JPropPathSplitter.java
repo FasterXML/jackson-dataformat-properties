@@ -1,5 +1,8 @@
 package com.fasterxml.jackson.dataformat.javaprop.util;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.fasterxml.jackson.dataformat.javaprop.JavaPropsSchema;
 
 /**
@@ -30,17 +33,12 @@ public abstract class JPropPathSplitter
             // otherwise it's still quite simple
             return new PathOnlySplitter(sep, schema.parseSimpleIndexes());
         }
-        // Yes, got index marker to use. But how about separator?
-        if (sep.isEmpty()) { // no separator, just index. Unusual...
-            return NonSplitting.instance;
-        } else { // both separator and index
-            return new PathOnlySplitter(sep, schema.parseSimpleIndexes());
+        // Yes, got index marker to use. But separator?
+        if (sep.isEmpty()) {
+            return new IndexOnlySplitter(schema.parseSimpleIndexes(), indexMarker);
         }
-
-//        // !!! TBI
-//        throw new IllegalStateException("Handling of Indexes not yet supported");
-
-//        return new PathOnlySplitter(sep, schema.parseSimpleIndexes());
+        return new IndexSplitter(sep, schema.parseSimpleIndexes(),
+                indexMarker);
     }
 
     /**
@@ -166,7 +164,103 @@ public abstract class JPropPathSplitter
             return curr;
         }
     }
-    
+
+    /**
+     * Special variant that does not use path separator, but does allow
+     * index indicator, at the end of path.
+     */
+    public static class IndexOnlySplitter extends JPropPathSplitter
+    {
+        protected final Pattern _indexMatch;
+        
+        public IndexOnlySplitter(boolean useSimpleIndex,
+                Markers indexMarker)
+        {
+            super(useSimpleIndex);
+            _indexMatch = Pattern.compile(String.format("(.*)%s(\\d{1,9})%s$",
+                    Pattern.quote(indexMarker.getStart()),
+                    Pattern.quote(indexMarker.getEnd())));
+        }
+
+        @Override
+        public JPropNode splitAndAdd(JPropNode parent,
+                String key, String value)
+        {
+            Matcher m = _indexMatch.matcher(key);
+            // short-cut for common case of no index:
+            if (!m.matches()) {
+                return _addSegment(parent, key).setValue(value);
+            }
+            // otherwise we need recursion as we "peel" away layers
+            return _splitMore(parent, m.group(1), m.group(2))
+                    .setValue(value);
+        }
+
+        protected JPropNode _splitMore(JPropNode parent, String prefix, String indexStr)
+        {
+            int ix = Integer.parseInt(indexStr);
+            Matcher m = _indexMatch.matcher(prefix);
+            if (!m.matches()) {
+                parent = _addSegment(parent, prefix);
+            } else {
+                parent = _splitMore(parent, m.group(1), m.group(2));
+            }
+            return parent.addByIndex(ix);
+        }
+    }
+
+    public static class IndexSplitter extends JPropPathSplitter
+    {
+        protected final Pattern _indexMatch;
+        
+        public IndexSplitter(String pathSeparator, boolean useSimpleIndex,
+                Markers indexMarker)
+        {
+            super(useSimpleIndex);
+            _indexMatch = Pattern.compile(String.format
+                    ("(%s)|(%s(\\d{1,9})%s)",
+                            Pattern.quote(pathSeparator),
+                            Pattern.quote(indexMarker.getStart()),
+                            Pattern.quote(indexMarker.getEnd())));
+        }
+
+        @Override
+        public JPropNode splitAndAdd(JPropNode parent,
+                String key, String value)
+        {
+            Matcher m = _indexMatch.matcher(key);
+            int start = 0;
+
+            while (m.find()) {
+                // which match did we get? Either path separator (1), or index (2)
+                int ix = m.start(1);
+
+                if (ix >= 0) { // path separator...
+                    if (ix > start) {
+                        String segment = key.substring(start, ix);
+                        parent = _addSegment(parent, segment);
+                    }
+                    start = m.end(1);
+                    continue;
+                }
+                // no, index marker, with contents
+                ix = m.start(2);
+                if (ix > start) {
+                    String segment = key.substring(start, ix);
+                    parent = _addSegment(parent, segment);
+                }
+                start = m.end(2);
+                ix = Integer.parseInt(m.group(3));
+                parent = parent.addByIndex(ix);
+            }
+            if (start < key.length()) {
+                String segment = (start == 0) ? key : key.substring(start);
+                parent = _addSegment(parent, segment);
+            }
+            return parent.setValue(value);
+        }
+    }
+
     /*
     public static void main(String[] args) throws Exception
     {
