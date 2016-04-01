@@ -1,6 +1,7 @@
 package com.fasterxml.jackson.dataformat.javaprop;
 
 import com.fasterxml.jackson.core.FormatSchema;
+import com.fasterxml.jackson.dataformat.javaprop.util.JPropPathSplitter;
 import com.fasterxml.jackson.dataformat.javaprop.util.Markers;
 
 /**
@@ -16,7 +17,13 @@ public class JavaPropsSchema
     protected final static Markers DEFAULT_INDEX_MARKER = Markers.create("[", "]");
 
     protected final static JavaPropsSchema EMPTY = new JavaPropsSchema();
-    
+
+    /**
+     * Since splitter instances are slightly costly to build in some cases,
+     * we will lazily instantiate and cache them.
+     */
+    protected transient JPropPathSplitter _splitter;
+
     /*
     /**********************************************************************
     /* Simple numeric properties
@@ -127,7 +134,7 @@ public class JavaPropsSchema
 
     /*
     /**********************************************************************
-    /* Construction, mutant factories
+    /* Construction, factories, mutant factories
     /**********************************************************************
      */
 
@@ -145,6 +152,14 @@ public class JavaPropsSchema
         _header = base._header;
     }
 
+    public JPropPathSplitter pathSplitter() {
+        JPropPathSplitter splitter = _splitter;
+        if (splitter == null) {
+            _splitter = splitter = JPropPathSplitter.create(this);
+        }
+        return splitter;
+    }
+    
     public JavaPropsSchema withFirstArrayOffset(int v) {
         if (v == _firstArrayOffset) {
             return this;

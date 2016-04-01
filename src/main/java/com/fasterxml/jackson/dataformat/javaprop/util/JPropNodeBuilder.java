@@ -11,7 +11,7 @@ public class JPropNodeBuilder
             Properties props)
     {
         JPropNode root = new JPropNode();
-        JPropPathSplitter splitter = JPropPathSplitter.create(schema);
+        JPropPathSplitter splitter = schema.pathSplitter();
         for (Map.Entry<?,?> entry : props.entrySet()) {
             // these should be Strings; but due to possible "compromised" properties,
             // let's play safe, coerce if and as necessary

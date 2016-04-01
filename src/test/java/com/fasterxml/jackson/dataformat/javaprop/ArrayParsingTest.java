@@ -134,7 +134,7 @@ public class ArrayParsingTest extends ModuleTestBase
         _testPointListWithIndex(false);
         _testPointListWithIndex(true);
     }
-    
+
     private void _testPointListWithIndex(boolean useBytes) throws Exception
     {
         final String INPUT = "p[1].x=1\n"
