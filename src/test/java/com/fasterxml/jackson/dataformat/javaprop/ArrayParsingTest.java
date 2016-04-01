@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 
 public class ArrayParsingTest extends ModuleTestBase
 {
@@ -93,11 +94,13 @@ public class ArrayParsingTest extends ModuleTestBase
 
     public void testPointList() throws Exception
     {
-        _testPointList(false);
-        _testPointList(true);
+        _testPointList(false, false);
+        _testPointList(true, false);
+        _testPointList(false, true);
+        _testPointList(true, true);
     }
 
-    private void _testPointList(boolean useBytes) throws Exception
+    private void _testPointList(boolean useBytes, boolean allowIndex) throws Exception
     {
         final String INPUT = "p.1.x=1\n"
                 +"p.1.y=2\n"
@@ -106,7 +109,14 @@ public class ArrayParsingTest extends ModuleTestBase
                 +"p.3.x=5\n"
                 +"p.3.y=6\n"
                 ;
-        Points result = _mapFrom(MAPPER, INPUT, Points.class, useBytes);
+        JavaPropsSchema schema = JavaPropsSchema.emptySchema();
+        if (allowIndex) { // default schema marker is fine
+            ;
+        } else {
+            schema = schema.withoutIndexMarker();
+        }
+        ObjectReader r = MAPPER.reader(schema);
+        Points result = _mapFrom(r, INPUT, Points.class, useBytes);
         assertNotNull(result);
         assertNotNull(result.p);
 //System.err.println("As JSON: "+new ObjectMapper().writeValueAsString(result));        

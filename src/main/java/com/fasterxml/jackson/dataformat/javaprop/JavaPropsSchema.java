@@ -187,7 +187,7 @@ public class JavaPropsSchema
         s._pathSeparator = "";
         return s;
     }
-    
+
     public JavaPropsSchema withIndexMarker(Markers v) {
         if (_equals(v, _indexMarker)) {
             return this;
@@ -197,6 +197,15 @@ public class JavaPropsSchema
         return s;
     }
 
+    public JavaPropsSchema withoutIndexMarker() {
+        if (_indexMarker == null) {
+            return this;
+        }
+        JavaPropsSchema s = new JavaPropsSchema(this);
+        s._indexMarker = null;
+        return s;
+    }
+    
     public JavaPropsSchema withParseSimpleIndexes(boolean v) {
         if (v == _parseSimpleIndexes) {
             return this;

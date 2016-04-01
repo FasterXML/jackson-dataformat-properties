@@ -31,7 +31,10 @@ public abstract class JPropPathSplitter
                 return NonSplitting.instance;
             }
             // otherwise it's still quite simple
-            return new PathOnlySplitter(sep, schema.parseSimpleIndexes());
+            if (sep.length() == 1) {
+                return new CharPathOnlySplitter(sep.charAt(0), schema.parseSimpleIndexes());
+            }
+            return new StringPathOnlySplitter(sep, schema.parseSimpleIndexes());
         }
         // Yes, got index marker to use. But separator?
         if (sep.isEmpty()) {
@@ -65,6 +68,17 @@ public abstract class JPropPathSplitter
             }
         }
         return parent.addByName(segment);
+    }
+
+    protected JPropNode _lastSegment(JPropNode parent, String path, int start, int end)
+    {
+        if (start < end) {
+            if (start > 0) {
+                path = path.substring(start);
+            }
+            parent = _addSegment(parent, path);
+        }
+        return parent;
     }
 
     protected int _asInt(String segment) {
@@ -119,12 +133,49 @@ public abstract class JPropPathSplitter
      * Simple variant where we only have path separator, and optional "segment
      * is index iff value is integer number"
      */
-    public static class PathOnlySplitter extends JPropPathSplitter
+    public static class CharPathOnlySplitter extends JPropPathSplitter
+    {
+        protected final char _pathSeparatorChar;
+
+        public CharPathOnlySplitter(char sepChar, boolean useIndex)
+        {
+            super(useIndex);
+            _pathSeparatorChar = sepChar;
+        }
+
+        @Override
+        public JPropNode splitAndAdd(JPropNode parent,
+                String key, String value)
+        {
+            JPropNode curr = parent;
+            int start = 0;
+            final int keyLen = key.length();
+            int ix;
+
+            while ((ix = key.indexOf(_pathSeparatorChar, start)) >= start) {
+                if (ix > start) { // segment before separator
+                    String segment = key.substring(start, ix);
+                    curr = _addSegment(curr, segment);
+                }
+                start = ix + 1;
+                if (start == key.length()) {
+                    break;
+                }
+            }
+            return _lastSegment(curr, key, start, keyLen).setValue(value);
+        }
+    }
+
+    /**
+     * Simple variant where we only have path separator, and optional "segment
+     * is index iff value is integer number"
+     */
+    public static class StringPathOnlySplitter extends JPropPathSplitter
     {
         protected final String _pathSeparator;
         protected final int _pathSeparatorLength;
 
-        public PathOnlySplitter(String pathSeparator, boolean useIndex)
+        public StringPathOnlySplitter(String pathSeparator, boolean useIndex)
         {
             super(useIndex);
             _pathSeparator = pathSeparator;
@@ -138,12 +189,9 @@ public abstract class JPropPathSplitter
             JPropNode curr = parent;
             int start = 0;
             final int keyLen = key.length();
+            int ix;
 
-            while (true) {
-                int ix = key.indexOf(_pathSeparator, start);
-                if (ix < 0) {
-                    break;
-                }
+            while ((ix = key.indexOf(_pathSeparator, start)) >= start) {
                 if (ix > start) { // segment before separator
                     String segment = key.substring(start, ix);
                     curr = _addSegment(curr, segment);
@@ -153,18 +201,10 @@ public abstract class JPropPathSplitter
                     break;
                 }
             }
-
-            if (start < keyLen) {
-                if (start > 0) {
-                    key = key.substring(start);
-                }
-                curr = _addSegment(curr, key);
-            }
-            curr.setValue(value);
-            return curr;
+            return _lastSegment(curr, key, start, keyLen).setValue(value);
         }
     }
-
+    
     /**
      * Special variant that does not use path separator, but does allow
      * index indicator, at the end of path.
@@ -212,15 +252,21 @@ public abstract class JPropPathSplitter
     public static class IndexSplitter extends JPropPathSplitter
     {
         protected final Pattern _indexMatch;
+
+        // small but important optimization to 
+        protected final int _indexFirstChar;
+//        protected final 
         
         public IndexSplitter(String pathSeparator, boolean useSimpleIndex,
                 Markers indexMarker)
         {
             super(useSimpleIndex);
+            String startMarker = indexMarker.getStart();
+            _indexFirstChar = startMarker.charAt(0);
             _indexMatch = Pattern.compile(String.format
                     ("(%s)|(%s(\\d{1,9})%s)",
                             Pattern.quote(pathSeparator),
-                            Pattern.quote(indexMarker.getStart()),
+                            Pattern.quote(startMarker),
                             Pattern.quote(indexMarker.getEnd())));
         }
 
@@ -253,29 +299,7 @@ public abstract class JPropPathSplitter
                 ix = Integer.parseInt(m.group(3));
                 parent = parent.addByIndex(ix);
             }
-            if (start < key.length()) {
-                String segment = (start == 0) ? key : key.substring(start);
-                parent = _addSegment(parent, segment);
-            }
-            return parent.setValue(value);
+            return _lastSegment(parent, key, start, key.length()).setValue(value);
         }
     }
-
-    /*
-    public static void main(String[] args) throws Exception
-    {
-        String p1 = Pattern.quote("[");
-        String p2 = Pattern.quote("->");
-
-        Pattern p = Pattern.compile("("+p1+")|("+p2+")");
-
-        Matcher m = p.matcher("path.and[2]->foo");
-        System.out.println("Pattern == "+p);
-        if (!m.find()) {
-            throw new Error("Not found!");
-        }
-        System.out.println("Matches: main="+m.group(0)+" , 1='"+m.group(1)+"' vs 2='"+m.group(2)+"'");
-        System.out.println(" starts: 1="+m.start(1)+", 2="+m.start(2)+" vs 0 = "+m.start());
-    }
-    */
 }

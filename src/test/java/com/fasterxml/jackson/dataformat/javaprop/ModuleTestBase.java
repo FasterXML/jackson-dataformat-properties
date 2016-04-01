@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 public abstract class ModuleTestBase extends junit.framework.TestCase
@@ -135,7 +136,7 @@ public abstract class ModuleTestBase extends junit.framework.TestCase
     /* Helper methods; read helpers
     /**********************************************************
      */
-    
+
     protected final <T> T _mapFrom(ObjectMapper mapper, String input, Class<T> type,
             boolean useBytes)
         throws IOException
@@ -146,7 +147,18 @@ public abstract class ModuleTestBase extends junit.framework.TestCase
         }
         return mapper.readValue(new StringReader(input), type);
     }
-    
+
+    protected final <T> T _mapFrom(ObjectReader reader, String input, Class<T> type,
+            boolean useBytes)
+        throws IOException
+    {
+        if (useBytes) {
+            InputStream in = new ByteArrayInputStream(input.getBytes("ISO-8859-1"));
+            return reader.forType(type).readValue(in);
+        }
+        return reader.forType(type).readValue(new StringReader(input));
+    }
+
     /*
     /**********************************************************
     /* Helper methods; low-level
