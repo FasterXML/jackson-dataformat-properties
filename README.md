@@ -167,7 +167,8 @@ content in specific format. In case of Java Properties, schema type to use is
 
 Format definitions may be passed either directly to specific `JavaPropsGenerator` / `JavaPropsParser`
 (when working directly with low-level Streaming API), or, more commonly, when constructing
-`ObjectReader` / `ObjectWriter` (as shown in samples above).
+`ObjectReader` / `ObjectWriter` (as shown in samples above). If no schema is explicitly specified,
+the default instance (accessible with `JavaPropsSchema.emptySchema()`) is used.
 
 Schema instances are created by using "mutant factory" methods like `withPathSeparator` on
 an instance; since schema instances are fully immutable (to allow thread-safe sharing and
@@ -190,49 +191,65 @@ Currently existing configuration settings to use can be divide into three groups
 #### JavaPropsSchema.keyValueSeparator
 
 * Marker used to separate property key and value segments when writing content
-    * Has currently (2.7) no effect on parsing
+    * Only affects writing: currently (2.7) has no effect on reading
 * Default value: "="
 * Mutator method: `JavaPropsSchema.withKeyValueSeparator(String)`
 
 #### JavaPropsSchema.lineEnding
 
-* 
+* String output after each logical key/value entry, usually linefeed
+    * Only affects writing: currently (2.7) has no effect on reading (reader assumes a linefeed)
 * Default value: "\n" (Unix linefeed)
 * Mutator method: `JavaPropsSchema.withLineEnding(String)`
 
 #### JavaPropsSchema.lineIndentation
 
-* 
+* String output before each logical key/value entry, useful for adding indentation
+    * Only affects writing: currently (2.7) has no effect on reading (reader skips any white space that precedes key name)
 * Default value: "" (empty String; that is, no indentation prepended)
 * Mutator method: `JavaPropsSchema.withLineIndentation(String)`
 
 #### JavaPropsSchema.pathSeparator
 
-* 
+* Marker used to separate logical path segments within key name, if any; if disabled (specified as empty String), no path component separation is performed
+    * Affects both reading and writing
 * Default value: "."
-* Mutator method: `JavaPropsSchema.withPathSeparator(String)`
+* Mutator methods
+    * `JavaPropsSchema.withPathSeparator(String)` to assign path separator (except if "" given, same as disabling)
+    * `JavaPropsSchema.withoutPathSeparator()` to disable use of path logic; if so, only main-level properties are available, with exact property key as name
 
 ### JavaPropsSchema: array representation
 
 #### JavaPropsSchema.firstArrayOffset
 
-* 
+* If array handling is enabled (simple and/or marker-based indexes), defines the value used as path component for the first element; other elements advance index value by 1
+    * Has only effect on writing: when reading, index values are used for ordering but are not used as absolute physical indexes within logical arrays
+    * Most commonly used values are `1` and `0`, although any integer value may be used
 * Default value: `1`
 * Mutator method: `JavaPropsSchema.withFirstArrayOffset(int)`
 
 #### JavaPropsSchema.indexMarker
 
-* 
-* Default value:
+* Optional pair of start- and end-markers that may be used to denote array entries
+* Default value: `Markers("[", "]")` -- allows use of notation like "path.array[1].x = 15"
+    * Means that by default marker-based notation IS allowed
 * Mutator methods:
     * `JavaPropsSchema.withIndexMarker(Markers)`
     * `JavaPropsSchema.withoutIndexMarker()`
 
 #### JavaPropsSchema.parseSimpleIndexes
 
-* 
-* Default value: `true`
+* On/off setting that determines whether path segments that are valid positive integers are automatically considered to indicate an array value
+    * As name implies, only affects reading
+* Default value: `true` -- means that by default path segments that "look like array index" will be considered to be array entries
 * Mutator method: `JavaPropsSchema.withParseSimpleIndexes(boolean)`
+
+#### JavaPropsSchema.writeIndexUsingMarkers
+
+* On/off setting that determines which notation (simple, or marker-based) is used for writing paths for array values: if `true`, marker-based (start/end markers) indexing is used, if `false`, "simple" notation where index is output as path segment
+    * With default settings these would lead to either "path.array.1.x = 15"  (`false`) or "path.array[1].x = 15" output
+* Default value: `false` (so "simple" notation is used, "path.array.1.x = 15")
+* Mutator method: `JavaPropsSchema.withWriteIndexUsingMarkers(boolean)`
 
 ### JavaPropsSchema: other configuration
 
