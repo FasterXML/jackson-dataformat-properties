@@ -152,6 +152,13 @@ public class JavaPropsSchema
         _header = base._header;
     }
 
+    /**
+     * Accessor for getting a {@link JPropPathSplitter} instance that does
+     * splitting according to the settings of this instance.
+     *<p>
+     * Note that instance is constructed lazily as needed, but reused afterwards
+     * for this instance (and for these specific settings).
+     */
     public JPropPathSplitter pathSplitter() {
         JPropPathSplitter splitter = _splitter;
         if (splitter == null) {
@@ -248,6 +255,13 @@ public class JavaPropsSchema
         return s;
     }
 
+    /**
+     * @since 2.8
+     */
+    public JavaPropsSchema withoutLineIndentation() {
+        return withLineIndentation("");
+    }
+
     public JavaPropsSchema withKeyValueSeparator(String v) {
         if (_equals(v, _keyValueSeparator)) {
             return this;
@@ -281,6 +295,20 @@ public class JavaPropsSchema
         JavaPropsSchema s = new JavaPropsSchema(this);
         s._header = v;
         return s;
+    }
+
+    /**
+     * Convenience method, functionally equivalent to:
+     *<pre>
+     *   withHeader("")
+     *</pre>
+     * used to ensure that no header is prepended before actual property values
+     * are output.
+     *
+     * @since 2.8
+     */
+    public JavaPropsSchema withoutHeader() {
+        return withHeader("");
     }
 
     /*

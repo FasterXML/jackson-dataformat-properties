@@ -160,7 +160,88 @@ TO BE WRITTEN
 
 ## Customizing handling with `JavaPropsSchema`
 
-TO BE WRITTEN
+The most important format-specific configuration mechanism is the ability to define
+a `FormatSchema` (type define in `jackson-core`) to use for parsing and generating
+content in specific format. In case of Java Properties, schema type to use is
+`JavaPropsSchema`.
+
+Format definitions may be passed either directly to specific `JavaPropsGenerator` / `JavaPropsParser`
+(when working directly with low-level Streaming API), or, more commonly, when constructing
+`ObjectReader` / `ObjectWriter` (as shown in samples above).
+
+Schema instances are created by using "mutant factory" methods like `withPathSeparator` on
+an instance; since schema instances are fully immutable (to allow thread-safe sharing and
+reuse), a new instance is always created if settings would need to change.
+Typical usage, then is:
+
+```java
+JavaPropsSchema schema = JavaPropsSchema.emptySchema()
+   .withPathSeparator("->");
+```
+
+Currently existing configuration settings to use can be divide into three groups:
+
+* Separators for indicating how components of logical entries are separated from each other. Some settings apply to both reading and writing, others to only generation
+* Array settings for indicating how flat Property keys can be interpreted as hierarchic paths
+* Other settings for things that are neither separators nor array settings.
+
+### JavaPropsSchema: separators
+
+#### JavaPropsSchema.keyValueSeparator
+
+* Marker used to separate property key and value segments when writing content
+    * Has currently (2.7) no effect on parsing
+* Default value: "="
+* Mutator method: `JavaPropsSchema.withKeyValueSeparator(String)`
+
+#### JavaPropsSchema.lineEnding
+
+* 
+* Default value: "\n" (Unix linefeed)
+* Mutator method: `JavaPropsSchema.withLineEnding(String)`
+
+#### JavaPropsSchema.lineIndentation
+
+* 
+* Default value: "" (empty String; that is, no indentation prepended)
+* Mutator method: `JavaPropsSchema.withLineIndentation(String)`
+
+#### JavaPropsSchema.pathSeparator
+
+* 
+* Default value: "."
+* Mutator method: `JavaPropsSchema.withPathSeparator(String)`
+
+### JavaPropsSchema: array representation
+
+#### JavaPropsSchema.firstArrayOffset
+
+* 
+* Default value: `1`
+* Mutator method: `JavaPropsSchema.withFirstArrayOffset(int)`
+
+#### JavaPropsSchema.indexMarker
+
+* 
+* Default value:
+* Mutator methods:
+    * `JavaPropsSchema.withIndexMarker(Markers)`
+    * `JavaPropsSchema.withoutIndexMarker()`
+
+#### JavaPropsSchema.parseSimpleIndexes
+
+* 
+* Default value: `true`
+* Mutator method: `JavaPropsSchema.withParseSimpleIndexes(boolean)`
+
+### JavaPropsSchema: other configuration
+
+#### JavaPropsSchema.header
+
+* Optional String to output at the beginning of resulting Properties output, before any of the values is output; typically to add comment line(s)
+    * NOTE: should always end with a linefeed (unless specified as empty String), as otherwise first entry would be concatenated as part of last line of header
+* Default value: "" (empty String, that is, no output)
+* Mutator method: `JavaPropsSchema.withHeader(String)`
 
 # Sample Usage
 
