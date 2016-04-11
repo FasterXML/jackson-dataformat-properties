@@ -5,8 +5,16 @@ import com.fasterxml.jackson.dataformat.javaprop.util.JPropPathSplitter;
 import com.fasterxml.jackson.dataformat.javaprop.util.Markers;
 
 /**
- * Simple {@link FormatSchema} sub-type that defines properties of
- * a CSV document to read or write.
+ * Simple {@link FormatSchema} sub-type that defines details of things like:
+ *<ul>
+ *  <li>How are "flat" property names mapped to hierarchic POJO types, using
+ * separator-based naming convention.
+ *    </li>
+ *  <li>What indentation (if any) is used before key values, and between key/value
+ *    </li>
+ *  <li>If and how are Array values inferred from property names
+ *    </li>
+ *</ul>
  */
 public class JavaPropsSchema
     implements FormatSchema,
