@@ -246,13 +246,10 @@ public class JavaPropsGenerator extends GeneratorBase
         }
     }
 
-    // !!! TODO: Implement in 2.8 -- once 'final' removed
-    /*
     @Override
-    public JsonWriteContext getOutputContext() {
+    public JsonStreamContext getOutputContext() {
         return _jpropContext;
     }
-    */
 
     /*
     /**********************************************************************

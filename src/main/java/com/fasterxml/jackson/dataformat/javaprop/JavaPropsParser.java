@@ -9,7 +9,6 @@ import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.core.base.ParserMinimalBase;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.util.ByteArrayBuilder;
-
 import com.fasterxml.jackson.dataformat.javaprop.io.JPropReadContext;
 import com.fasterxml.jackson.dataformat.javaprop.util.JPropNode;
 import com.fasterxml.jackson.dataformat.javaprop.util.JPropNodeBuilder;
@@ -271,6 +270,17 @@ System.err.println("\n>>");
         return 0;
     }
 
+    @Override // since 2.8
+    public int getText(Writer writer) throws IOException
+    {
+        String str = getText();
+        if (str == null) {
+            return 0;
+        }
+        writer.write(str);
+        return str.length();
+    }
+    
     @SuppressWarnings("resource")
     @Override
     public byte[] getBinaryValue(Base64Variant variant) throws IOException

@@ -166,8 +166,8 @@ public class JPropWriteContext
     public StringBuilder appendDesc(StringBuilder sb) {
         if (_parent != null) {
             sb = _parent.appendDesc(sb);
+            sb.append('/');
         }
-        sb.append('/');
         switch (_type) {
         case TYPE_OBJECT:
             if (_currentName != null) {

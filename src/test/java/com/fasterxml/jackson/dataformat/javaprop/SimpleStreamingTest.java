@@ -9,9 +9,11 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonStreamContext;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.io.SerializedString;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.javaprop.io.JPropWriteContext;
 
 public class SimpleStreamingTest extends ModuleTestBase
 {
@@ -58,6 +60,12 @@ public class SimpleStreamingTest extends ModuleTestBase
 
         gen.writeFieldName("arr");
         gen.writeStartArray();
+
+        JsonStreamContext ctxt = gen.getOutputContext();
+        String path = ctxt.toString();
+        assertTrue(ctxt instanceof JPropWriteContext);
+        // Note: this context gives full path, unlike many others
+        assertEquals("/arr/0", path);
         
         gen.writeEndArray();
 
