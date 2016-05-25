@@ -197,7 +197,10 @@ public class JavaPropsGenerator extends GeneratorBase
 
     @Override
     public boolean canOmitFields() { return true; }
-    
+
+    @Override
+    public boolean canWriteFormattedNumbers() { return true; }
+
     // No Format Features yet
 /*
     

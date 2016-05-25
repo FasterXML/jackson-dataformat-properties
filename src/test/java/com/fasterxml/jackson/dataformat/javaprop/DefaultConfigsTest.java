@@ -39,12 +39,14 @@ public class DefaultConfigsTest extends ModuleTestBase
         _verifyVersion(gen);
         assertTrue(gen.canOmitFields());
         assertFalse(gen.canWriteBinaryNatively());
+        assertTrue(gen.canWriteFormattedNumbers());
         assertFalse(gen.canWriteObjectId());
         assertFalse(gen.canWriteTypeId());
         assertTrue(gen.canUseSchema(JavaPropsSchema.emptySchema()));
 
         gen.setSchema(JavaPropsSchema.emptySchema());
         assertSame(JavaPropsSchema.emptySchema(), gen.getSchema());
+        gen.close();
     }
 
     public void testParserConfig() throws Exception
@@ -60,6 +62,7 @@ public class DefaultConfigsTest extends ModuleTestBase
 
         p.setSchema(JavaPropsSchema.emptySchema());
         assertSame(JavaPropsSchema.emptySchema(), p.getSchema());
+        p.close();
     }    
 
     private void _verifyVersion(Versioned v) {
