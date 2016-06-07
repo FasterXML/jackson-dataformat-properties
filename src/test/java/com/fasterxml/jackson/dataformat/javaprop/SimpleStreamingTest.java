@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonStreamContext;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.io.SerializedString;
@@ -30,8 +31,32 @@ public class SimpleStreamingTest extends ModuleTestBase
         assertNull(p.getEmbeddedObject());
         assertNotNull(p.getCurrentLocation()); // N/A
         assertNotNull(p.getTokenLocation()); // N/A
+        assertToken(JsonToken.FIELD_NAME, p.nextToken());
+        assertEquals("foo", p.getText());
+        assertToken(JsonToken.VALUE_STRING, p.nextToken());
+        StringWriter sw = new StringWriter();
+        assertEquals(3, p.getText(sw));
+        assertEquals("bar", sw.toString());
         p.close();
         assertTrue(p.isClosed());
+
+        // one more thing, verify handling of non-binary
+        p = F.createParser("foo = bar");
+        assertToken(JsonToken.START_OBJECT, p.nextToken());
+        assertToken(JsonToken.FIELD_NAME, p.nextToken());
+        try {
+            p.getBinaryValue();
+            fail("Should not pass");
+        } catch (JsonProcessingException e) {
+            verifyException(e, "can not access as binary");
+        }
+        try {
+            p.getDoubleValue();
+            fail("Should not pass");
+        } catch (JsonProcessingException e) {
+            verifyException(e, "can not use numeric");
+        }
+        p.close();
     }
 
     public void testStreamingGeneration() throws Exception

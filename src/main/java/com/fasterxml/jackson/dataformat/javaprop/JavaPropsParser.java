@@ -387,7 +387,7 @@ System.err.println("\n>>");
     @Override
     protected void _handleEOF() throws JsonParseException {
         if ((_readContext != null) && !_readContext.inRoot()) {
-            _reportInvalidEOF(": expected close marker for "+_readContext.getTypeDesc());
+            _reportInvalidEOF(": expected close marker for "+_readContext.typeDesc(), null);
         }
     }
 }

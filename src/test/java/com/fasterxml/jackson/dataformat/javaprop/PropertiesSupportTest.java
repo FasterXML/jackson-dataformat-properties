@@ -3,8 +3,7 @@ package com.fasterxml.jackson.dataformat.javaprop;
 import java.util.*;
 
 /**
- * Tests for extended functionality to work with JDK `Properties`
- * Object
+ * Tests for extended functionality to work with JDK `Properties` Object
  */
 public class PropertiesSupportTest extends ModuleTestBase
 {

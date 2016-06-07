@@ -8,8 +8,11 @@ import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.core.format.InputAccessor;
 import com.fasterxml.jackson.core.format.MatchStrength;
 import com.fasterxml.jackson.core.io.IOContext;
+import com.fasterxml.jackson.dataformat.javaprop.impl.PropertiesBackedGenerator;
+import com.fasterxml.jackson.dataformat.javaprop.impl.WriterBackedGenerator;
 import com.fasterxml.jackson.dataformat.javaprop.io.Latin1Reader;
 
+@SuppressWarnings("resource")
 public class JavaPropsFactory extends JsonFactory
 {
     private static final long serialVersionUID = 1L;
@@ -116,7 +119,7 @@ public class JavaPropsFactory extends JsonFactory
 
     /*
     /**********************************************************
-    /* Extended parser factory methods
+    /* Extended parser/generator factory methods
     /**********************************************************
      */
 
@@ -124,11 +127,21 @@ public class JavaPropsFactory extends JsonFactory
      * Convenience method to allow feeding a pre-parsed {@link Properties}
      * instance as input.
      */
-    public JsonParser createParser(Properties props) throws IOException {
+    public JavaPropsParser createParser(Properties props) {
         return new JavaPropsParser(_createContext(props, true),
                 props, _parserFeatures, _objectCodec, props);
     }
-    
+
+    /**
+     * Convenience method to allow using a pre-constructed {@link Properties}
+     * instance as output target, so that serialized property values
+     * are added.
+     */
+    public JavaPropsGenerator createGenerator(Properties props) {
+        return new PropertiesBackedGenerator(_createContext(props, true),
+                props, _generatorFeatures, _objectCodec);
+    }
+
     /*
     /**********************************************************
     /* Overridden parser factory methods
@@ -221,7 +234,6 @@ public class JavaPropsFactory extends JsonFactory
         return _createParser(new CharArrayReader(data, offset, len), ctxt);
     }
 
-    @SuppressWarnings("resource")
     @Override
     protected JsonParser _createParser(byte[] data, int offset, int len, IOContext ctxt) throws IOException
     {
@@ -237,7 +249,7 @@ public class JavaPropsFactory extends JsonFactory
     @Override
     protected JsonGenerator _createGenerator(Writer out, IOContext ctxt) throws IOException
     {
-        return new JavaPropsGenerator(ctxt, out, _generatorFeatures, _objectCodec);
+        return new WriterBackedGenerator(ctxt, out, _generatorFeatures, _objectCodec);
     }
 
     @Override
@@ -259,7 +271,6 @@ public class JavaPropsFactory extends JsonFactory
     /******************************************************
      */
 
-    @SuppressWarnings("resource")
     protected Properties _loadProperties(InputStream in, IOContext ctxt)
         throws IOException
     {
@@ -286,7 +297,7 @@ public class JavaPropsFactory extends JsonFactory
     private final JsonGenerator _createJavaPropsGenerator(IOContext ctxt,
             int stdFeat, ObjectCodec codec, OutputStream out) throws IOException
     {
-        return new JavaPropsGenerator(ctxt, _createWriter(out, null, ctxt),
+        return new WriterBackedGenerator(ctxt, _createWriter(out, null, ctxt),
                 stdFeat, _objectCodec);
                 
     }
