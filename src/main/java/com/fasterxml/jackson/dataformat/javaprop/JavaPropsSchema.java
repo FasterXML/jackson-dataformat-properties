@@ -86,8 +86,7 @@ public class JavaPropsSchema
      * name.
      *<p>
      * Note that this settings does NOT control whether "start/end marker" indicated
-     * indexes are enabled or not; those depend on {@link #_indexStartMarker} and
-     * {@link #_indexEndMarker}.
+     * indexes are enabled or not; those depend on {@link #_indexMarker}.
      *<p>
      * Default value is <code>true</code>, "plain" index segments are
      * supported.
@@ -102,7 +101,7 @@ public class JavaPropsSchema
 
     /**
      * Whether array-element paths are written using start/end markers
-     * (see {@link #_indexStartMarker}, {@link #_indexEndMarker}) or
+     * (see {@link #_indexMarker} or
      * "simple" index number: if set to <code>true</code> AND markers
      * are specified as non-empty Strings, will use sequence of
      *<pre>
