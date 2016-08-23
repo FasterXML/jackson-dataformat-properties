@@ -7,10 +7,8 @@ assuming dotted notation, but configurable from non-nested to other separators).
 
 ## Status
 
-While experimental, currently works well enough to pass not only basic unit tests but also
-standard [Jackson dataformat benchmark](https://github.com/FasterXML/jackson-benchmarks).
-The goal is to make 2.7 the first official release.
-
+Jackson 2.8.0 was the first official release. With 2.8.x this is still considered somewhat
+experimental module.
 
 ## Maven dependency
 
@@ -20,7 +18,7 @@ To use this extension on Maven-based projects, use following dependency:
 <dependency>
   <groupId>com.fasterxml.jackson.dataformat</groupId>
   <artifactId>jackson-dataformat-properties</artifactId>
-  <version>2.7.3-SNAPSHOT</version>
+  <version>2.8.1</version>
 </dependency>
 ```
 
