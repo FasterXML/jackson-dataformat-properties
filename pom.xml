@@ -25,7 +25,7 @@ configuration files as if there was implied nesting structure (by default using 
   </scm>
 
   <properties>
-    <version.jackson.core>2.8.2</version.jackson.core>
+    <version.jackson.core>2.8.3</version.jackson.core>
     <packageVersion.dir>com/fasterxml/jackson/dataformat/javaprop</packageVersion.dir>
     <packageVersion.package>${project.groupId}.javaprop</packageVersion.package>
   </properties>
