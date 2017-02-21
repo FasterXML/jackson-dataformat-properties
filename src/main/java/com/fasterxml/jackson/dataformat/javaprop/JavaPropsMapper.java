@@ -52,12 +52,18 @@ public class JavaPropsMapper extends ObjectMapper
     /**********************************************************
      */
 
+    /**
+     * @since 2.9
+     */
     public <T> T readValue(Properties props, Class<T> valueType)
         throws IOException
     {
         return readValue(getFactory().createParser(props), valueType);
     }
 
+    /**
+     * @since 2.9
+     */
     public <T> T readValue(Properties props, JavaType valueType)
         throws IOException
     {
@@ -73,6 +79,8 @@ public class JavaPropsMapper extends ObjectMapper
     /**
      * Convenience method that "writes" given `value` as properties
      * in given {@link Properties} object.
+     *
+     * @since 2.9
      */
     public void writeValue(Properties targetProps, Object value) throws IOException
     {
@@ -85,6 +93,12 @@ public class JavaPropsMapper extends ObjectMapper
         g.close();
     }
 
+    /**
+     * Convenience method that "writes" given `value` as properties
+     * in given {@link Properties} object.
+     *
+     * @since 2.9
+     */
     public void writeValue(Properties targetProps, Object value, JavaPropsSchema schema)
             throws IOException
     {
@@ -104,7 +118,8 @@ public class JavaPropsMapper extends ObjectMapper
      * Convenience method that serializes given value but so that results are
      * stored in a newly constructed {@link Properties}. Functionally equivalent
      * to serializing in a File and reading contents into {@link Properties}.
-     * 
+     *
+     * @since 2.9
      */
     public Properties writeValueAsProperties(Object value)
         throws IOException
@@ -114,6 +129,12 @@ public class JavaPropsMapper extends ObjectMapper
         return props;
     }
 
+    /**
+     * Convenience method that serializes given value but so that results are
+     * stored in given {@link Properties} instance.
+     *
+     * @since 2.9
+     */
     public Properties writeValueAsProperties(Object value, JavaPropsSchema schema)
         throws IOException
     {

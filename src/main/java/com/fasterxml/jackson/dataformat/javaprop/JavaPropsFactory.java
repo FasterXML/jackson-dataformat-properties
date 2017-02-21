@@ -126,6 +126,8 @@ public class JavaPropsFactory extends JsonFactory
     /**
      * Convenience method to allow feeding a pre-parsed {@link Properties}
      * instance as input.
+     *
+     * @since 2.9
      */
     public JavaPropsParser createParser(Properties props) {
         return new JavaPropsParser(_createContext(props, true),
@@ -136,6 +138,8 @@ public class JavaPropsFactory extends JsonFactory
      * Convenience method to allow using a pre-constructed {@link Properties}
      * instance as output target, so that serialized property values
      * are added.
+     *
+     * @since 2.9
      */
     public JavaPropsGenerator createGenerator(Properties props) {
         return new PropertiesBackedGenerator(_createContext(props, true),
