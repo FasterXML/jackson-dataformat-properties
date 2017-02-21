@@ -30,7 +30,7 @@ public class JPropNode
     protected Map<String, JPropNode> _byName;
 
     protected boolean _hasContents = false;
-    
+
     public JPropNode setValue(String v) {
         // should we care about overwrite?
         _value = v;
@@ -54,11 +54,14 @@ public class JPropNode
         }
         return n;
     }
-    
+
     public JPropNode addByName(String name) {
         // if former index entries, first coerce them
         _hasContents = true;
         if (_byIndex != null) {
+            if (_byName == null) {
+                _byName = new LinkedHashMap<>();
+            }
             for (Map.Entry<Integer, JPropNode> entry : _byIndex.entrySet()) {
                 _byName.put(entry.getKey().toString(), entry.getValue());
             }
