@@ -6,6 +6,7 @@ Project: jackson-dataformat-properties
 
 2.9.0 (not yet released)
 
+#1: Add convenience method(s) for reading System properties
 #3: Write into `Properties` instance (factory, mapper) using
   `JavaPropsMapper.writeValue()` with `Properties` and
   `JavaPropsMapper.writeValueAsProperties()`

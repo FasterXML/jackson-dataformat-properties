@@ -14,7 +14,7 @@ public class PropertiesSupportTest extends ModuleTestBase
         Properties props = new Properties();
         props.put("a.b", "14");
         props.put("x", "foo");
-        Map<?,?> result = MAPPER.readValue(props, Map.class);
+        Map<?,?> result = MAPPER.readPropertiesAs(props, Map.class);
         assertNotNull(result);
         assertEquals(2, result.size());
         assertEquals("foo", result.get("x"));
@@ -24,5 +24,31 @@ public class PropertiesSupportTest extends ModuleTestBase
         Map<?,?> m2 = (Map<?,?>) ob;
         assertEquals(1, m2.size());
         assertEquals("14", m2.get("b"));
+    }
+
+    public void testWithCustomSchema() throws Exception
+    {
+        Properties props = new Properties();
+        props.put("a/b", "14");
+        props.put("x.y/z", "foo");
+        JavaPropsSchema schema = JavaPropsSchema.emptySchema()
+                .withPathSeparator("/");
+        Map<?,?> result = MAPPER.readPropertiesAs(props, schema,
+                MAPPER.constructType(Map.class));
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        Object ob = result.get("a");
+        assertNotNull(ob);
+        assertTrue(ob instanceof Map<?,?>);
+        Map<?,?> m2 = (Map<?,?>) ob;
+        assertEquals(1, m2.size());
+        assertEquals("14", m2.get("b"));
+
+        ob = result.get("x.y");
+        assertNotNull(ob);
+        assertTrue(ob instanceof Map<?,?>);
+        m2 = (Map<?,?>) ob;
+        assertEquals(1, m2.size());
+        assertEquals("foo", m2.get("z"));
     }
 }
