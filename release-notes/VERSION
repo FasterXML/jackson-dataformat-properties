@@ -6,6 +6,11 @@ Project: jackson-dataformat-properties
 
 2.9.0 (not yet released)
 
+#3: Write into `Properties` instance (factory, mapper) using
+  `JavaPropsMapper.writeValue()` with `Properties` and
+  `JavaPropsMapper.writeValueAsProperties()`
+#4: Allow binding from `Properties` instance
+
 2.8.8 (not yet released)
 
 #6: Null-check for JPropNode byName map
