@@ -56,6 +56,10 @@ public class JPropNode
     }
 
     public JPropNode addByName(String name) {
+        if (_byName == null) {
+            _byName = new LinkedHashMap<>();
+        }
+
         // if former index entries, first coerce them
         _hasContents = true;
         if (_byIndex != null) {
@@ -67,14 +71,11 @@ public class JPropNode
             }
             _byIndex = null;
         }
-        if (_byName == null) {
-            _byName = new LinkedHashMap<>();
-        } else {
-            JPropNode old = _byName.get(name);
-            if (old != null) {
-                return old;
-            }
+        JPropNode old = _byName.get(name);
+        if (old != null) {
+            return old;
         }
+
         JPropNode result = new JPropNode();
         _byName.put(name, result);
         return result;
